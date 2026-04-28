@@ -25,6 +25,8 @@ pptx_work/.venv/
 
 # Generated/source data — re-buildable from extract.py + build-slides.mjs
 pptx_work/extracted_output/
+# Rendered slide JPEGs — re-buildable from sample.pptx via PowerPoint COM
+pptx_work/rendered_slides/
 
 # Original PowerPoint source — keep local, do not redistribute
 pptx_work/sample.pptx

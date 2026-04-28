@@ -61,6 +61,24 @@ export interface ImageVisual {
   };
 }
 
+export interface SlideImageVisual {
+  type: "slideImage";
+  data: {
+    src: string;
+    alt: string;
+  };
+}
+
+export interface ImagePairVisual {
+  type: "imagePair";
+  data: {
+    leftImage: { src: string; alt: string };
+    rightImage: { src: string; alt: string };
+    leftCaption?: string;
+    rightCaption?: string;
+  };
+}
+
 export interface ImageCardVisual {
   type: "imageCard";
   data: {
@@ -91,7 +109,9 @@ export type Visual =
   | ListVisual
   | ImageVisual
   | ImageCardVisual
-  | ImageComparisonVisual;
+  | ImageComparisonVisual
+  | SlideImageVisual
+  | ImagePairVisual;
 
 export interface Slide {
   id: SlideId;

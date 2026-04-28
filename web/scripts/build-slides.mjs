@@ -66,27 +66,6 @@ function maxFontPt(sh) {
   return m;
 }
 
-function tableToVisual(table) {
-  if (!table || !table.cells || table.cells.length === 0) return null;
-  const rows = table.cells.map((row) =>
-    row.map((cell) => {
-      if (!cell.text_frame) return "";
-      return cell.text_frame.paragraphs
-        .map(paragraphText)
-        .filter(Boolean)
-        .join(" ");
-    })
-  );
-  if (rows.length === 0) return null;
-  const headers = rows[0];
-  const body = rows.slice(1);
-  // collapse fully-empty trailing rows
-  while (body.length > 0 && body[body.length - 1].every((c) => !c.trim())) {
-    body.pop();
-  }
-  return { headers, rows: body };
-}
-
 function firstParagraph(sh) {
   if (!sh.text_frame) return "";
   for (const p of sh.text_frame.paragraphs) {
@@ -155,42 +134,33 @@ function sectionFor(slideIdx) {
   return "3. 推奨決定の深い考察";
 }
 
-function imageRelPath(imageFile) {
-  // imageFile looks like "extracted_output/images/slide1_shape1.png"
-  const basename = path.basename(imageFile);
-  return `/images/slides/${basename}`;
-}
-
 function sanitizeText(t) {
   if (!t) return t;
   // collapse whitespace, drop control chars
   return t.replace(/　/g, " ").replace(/[\t ]+/g, " ").trim();
 }
 
-function buildSlide(raw) {
+function buildSlide(raw, introCount) {
   const slideIdx = raw.slide_index;
   const id = `S${slideIdx}`;
-  const order = 6 + slideIdx; // N1〜N6 occupy orders 1〜6
+  const order = introCount + slideIdx;
 
-  // Collect shapes
+  // Collect shapes (still needed to derive title + narration text)
   const allShapes = (raw.shapes || []).slice();
   const textShapes = allShapes
     .filter((sh) => sh.text_frame && shapeText(sh))
     .sort((a, b) => topPt(a) - topPt(b) || leftPt(a) - leftPt(b));
-  const tableShapes = allShapes.filter((sh) => sh.table);
-  const imageShapes = allShapes.filter((sh) => sh.image_file);
 
   const titleShape = pickTitle(textShapes);
   let title = titleShape
     ? sanitizeText(cleanTitle(firstParagraph(titleShape)))
     : "";
   if (!title) title = `スライド ${slideIdx}`;
-  // Hard cap title at 40 chars to keep UI readable
   if (title.length > 40) title = title.slice(0, 38) + "…";
 
   const bodyShapes = textShapes.filter((s) => s !== titleShape);
 
-  // narration: join body paragraphs with blank lines
+  // narration: join body paragraphs with blank lines (used in NarrationPanel)
   const narrationParts = [];
   for (const sh of bodyShapes) {
     const t = shapeText(sh);
@@ -198,85 +168,19 @@ function buildSlide(raw) {
   }
   const narration =
     narrationParts.join("\n\n") ||
-    "*このスライドは原PowerPointから自動抽出された内容です。*";
+    `*このスライドの解説テキストは原 PowerPoint から自動抽出されたものです。*`;
 
-  // Decide visual
-  let visual;
-
-  if (tableShapes.length > 0) {
-    const t = tableToVisual(tableShapes[0].table);
-    if (t && t.headers.length > 0) {
-      visual = {
-        type: "table",
-        data: { headers: t.headers, rows: t.rows },
-      };
-    }
-  }
-
-  if (!visual && imageShapes.length === 1 && bodyShapes.length > 0) {
-    // image + meaningful body → imageCard
-    const bullets = bodyShapes
-      .flatMap((sh) =>
-        sh.text_frame.paragraphs.map(paragraphText).filter(Boolean)
-      )
-      .map(sanitizeText)
-      .filter((t) => t && t.length <= 200)
-      .slice(0, 6);
-    if (bullets.length > 0) {
-      visual = {
-        type: "imageCard",
-        data: {
-          heading: title,
-          image: {
-            src: imageRelPath(imageShapes[0].image_file),
-            alt: title,
-          },
-          bullets,
-        },
-      };
-    }
-  }
-
-  if (!visual && imageShapes.length >= 1 && bodyShapes.length === 0) {
-    // image only
-    visual = {
-      type: "image",
-      data: {
-        src: imageRelPath(imageShapes[0].image_file),
-        alt: title,
-      },
-    };
-  }
-
-  if (!visual) {
-    // default: card with bullets from body paragraphs
-    const bullets = bodyShapes
-      .flatMap((sh) =>
-        sh.text_frame.paragraphs.map(paragraphText).filter(Boolean)
-      )
-      .map(sanitizeText)
-      .filter((t) => t && t.length <= 240);
-
-    if (bullets.length === 0) {
-      visual = {
-        type: "card",
-        data: {
-          heading: title,
-          body: "（このスライドは原資料に本文が含まれていませんでした。）",
-        },
-      };
-    } else if (bullets.length === 1 && bullets[0].length > 60) {
-      visual = {
-        type: "card",
-        data: { body: bullets[0] },
-      };
-    } else {
-      visual = {
-        type: "card",
-        data: { bullets: bullets.slice(0, 8) },
-      };
-    }
-  }
+  // Visual: always use the rendered full slide image (1600×900 JPEG exported
+  // from the original sample.pptx). The image already contains the title and
+  // every visual element, so we don't render a separate title above it.
+  const padded = String(slideIdx).padStart(3, "0");
+  const visual = {
+    type: "slideImage",
+    data: {
+      src: `/images/slides-full/slide${padded}.jpg`,
+      alt: title,
+    },
+  };
 
   return {
     id,
@@ -475,7 +379,18 @@ const TITLE_OVERRIDES = {
 
 function applyOverride(slide) {
   const ov = REVISED_OVERRIDES[slide.id];
-  if (ov) return { ...slide, ...ov };
+  if (ov) {
+    // The slide *image* is the visual — don't replace it with curated visuals
+    // even if the override defines them. We still pull the curated narration,
+    // title, citations, warnings, and speaker notes.
+    const merged = { ...slide };
+    if (ov.title) merged.title = ov.title;
+    if (ov.narration) merged.narration = ov.narration;
+    if (ov.citationIds) merged.citationIds = ov.citationIds;
+    if (ov.warnings) merged.warnings = ov.warnings;
+    if (ov.speakerNotes) merged.speakerNotes = ov.speakerNotes;
+    return merged;
+  }
   const t = TITLE_OVERRIDES[slide.id];
   if (t) return { ...slide, title: t };
   return slide;
@@ -522,10 +437,11 @@ function main() {
   const existing = JSON.parse(fs.readFileSync(SLIDES_JSON, "utf8"));
 
   const introSlides = (existing.slides || []).filter((s) => /^N\d+$/.test(s.id));
+  const introCount = introSlides.length;
 
   const generated = extracted.slides
     .filter((s) => !s.extract_error)
-    .map(buildSlide)
+    .map((s) => buildSlide(s, introCount))
     .map(applyOverride);
 
   const merged = [...introSlides, ...generated];

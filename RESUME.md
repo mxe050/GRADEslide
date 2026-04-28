@@ -1,4 +1,26 @@
-# 作業再開メモ (Step 2 完了時点)
+# 作業再開メモ (Step 4 = ビジュアル大改造 完了時点)
+
+## Step 4 (ビジュアル大改造)
+- `pptx_work/sample.pptx` を PowerPoint COM (PowerShell) で 1600×900 JPEG に
+  全 106 枚レンダリング → `web/public/images/slides-full/slide{NNN}.jpg`
+- 新 VisualType **`slideImage`**: 画像のみフルブリード表示、タイトル文字オーバーレイなし
+- 新 VisualType **`imagePair`**: 2枚の画像を横並びで表示、各下に小さなキャプションのみ
+- `build-slides.mjs` を改修: S1〜S106 の visual を一律 `slideImage` に
+- intro N1〜N6 を **N1〜N10** に再設計し `intro/` の 5 ペア画像を全部使用:
+  - N1: 仮想症例 (text card / warning)
+  - N2: 6つの確認 (table)
+  - N3: AI-EBM 先生紹介 (text card)
+  - N4: RCT 対比 (imagePair)
+  - N5: SR 対比 (imagePair)
+  - N6: 診療ガイドライン 対比 (imagePair)
+  - N7: 観察研究 対比 (imagePair)
+  - N8: 基礎研究 対比 (imagePair)
+  - N9: 4 原則 (list)
+  - N10: ロードマップ (list)
+- 合計 **116 スライド** (intro 10 + S1〜S106)
+- 講演モードでは画像のみ最大表示 (NarrationPanel は元から表示しない)
+
+## 旧経緯メモ (Step 2 時点)
 
 最終更新: 2026-04-28
 ターゲット GitHub リポジトリ: https://github.com/mxe050/GRADEslide (空、未連携)
@@ -122,6 +144,33 @@
 - ✅ 用語集ポップアップ (Step 3c) — 19用語、点線下線+クリックポップオーバー
 - ✅ ブックマーク UI (Step 3d) — NavBar に「続き」ボタン
 - ✅ 講演者ノート別ウィンドウ (Step 3e) — /notes/[id] + BroadcastChannel 同期
+- ✅ 講演モード 16:9 余白調整 (Step 3f) — `width: min(100%, 100svh*16/9)` で portrait 対応 + 進捗バー
+
+### Step 4a: GitHub 連携 完了
+- ルート (`F:/.../GRADEslide`) に git init、初期コミットを main に push 済み
+- リモート: https://github.com/mxe050/GRADEslide (PUBLIC)
+- `.gitignore` 構成: `web/node_modules/`, `web/.next/`, `pptx_work/extracted_output/`, `pptx_work/sample.pptx`, `/intro/`, `新しいテキスト ドキュメント.txt` を除外
+
+### Step 4b: Vercel デプロイ (Root Directory = `web` で設定すること)
+**初回 import がうまくいかなかった原因**: vercel.json で `cd web && npm install` していたが、Vercel はフレームワーク検出時に **Root Directory の package.json** を直接読むため、ルートに package.json がないと "No Next.js version detected" エラー。
+→ 解決策: vercel.json を削除 (commit c89a222)、Vercel ダッシュボードで Root Directory を `web` に設定する。
+
+**ダッシュボードでの設定手順** (失敗した deployment から修正する場合):
+1. プロジェクト → **Settings** → **Build and Deployment** → **Root Directory**
+2. 値を `web` に変更して **Save**
+3. Framework Preset が Next.js になっているか確認 (なっていなければ手動で選択)
+4. 失敗した deployment ページの **Redeploy** (Build Cache は OFF) をクリック
+
+**新規 import するなら**:
+1. https://vercel.com/new → mxe050/GRADEslide を Import
+2. **Configure Project** で **Root Directory** を `web` に設定
+3. Framework Preset = Next.js (自動検出)
+4. Deploy
+
+**今後の更新フロー (修正作業が簡単な構成)**:
+1. ローカルで編集して `git push`
+2. Vercel が自動でデプロイ (Preview = PR、Production = main)
+3. 一切ターミナル不要 ⇒ "修正作業が簡単"
 
 ### Step 4 案
 - coreGRADE/paper/*.pdf からの引用ポップアップ

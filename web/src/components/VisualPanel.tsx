@@ -7,10 +7,12 @@ import type {
   ComparisonVisual,
   ImageCardVisual,
   ImageComparisonVisual,
+  ImagePairVisual,
   ImageVisual,
   ListVisual,
   QuoteVisual,
   Slide,
+  SlideImageVisual,
   TableVisual,
 } from "@/lib/types";
 import { getCitation } from "@/lib/slides";
@@ -22,6 +24,20 @@ interface Props {
 }
 
 export function VisualPanel({ slide, present }: Props) {
+  // For slideImage, render the image full-bleed without any title overlay
+  // (the original PowerPoint slide already contains its own title and visuals).
+  if (slide.visual.type === "slideImage") {
+    return (
+      <div
+        className={clsx(
+          "fade-in w-full h-full flex items-center justify-center",
+          present ? "" : "rounded-2xl overflow-hidden bg-black"
+        )}
+      >
+        <SlideImageR data={slide.visual.data} present={present} />
+      </div>
+    );
+  }
   return (
     <div
       className={clsx(
@@ -65,7 +81,107 @@ function Renderer({ slide, present }: Props) {
       return <ImageCardR data={v.data} present={present} />;
     case "imageComparison":
       return <ImageComparisonR data={v.data} present={present} />;
+    case "slideImage":
+      return <SlideImageR data={v.data} present={present} />;
+    case "imagePair":
+      return <ImagePairR data={v.data} present={present} />;
   }
+}
+
+function ImagePairR({
+  data,
+  present,
+}: {
+  data: ImagePairVisual["data"];
+  present?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-3 w-full h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 flex-1 min-h-0">
+        <PairBlock
+          tone="bad"
+          image={data.leftImage}
+          caption={data.leftCaption}
+          present={present}
+        />
+        <PairBlock
+          tone="good"
+          image={data.rightImage}
+          caption={data.rightCaption}
+          present={present}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PairBlock({
+  tone,
+  image,
+  caption,
+  present,
+}: {
+  tone: "good" | "bad";
+  image: { src: string; alt: string };
+  caption?: string;
+  present?: boolean;
+}) {
+  return (
+    <figure
+      className={clsx(
+        "rounded-xl overflow-hidden border-2 flex flex-col bg-white",
+        tone === "bad"
+          ? "border-rose-500/40"
+          : "border-emerald-500/50"
+      )}
+    >
+      {caption && (
+        <figcaption
+          className={clsx(
+            "px-3 py-1.5 text-sm font-semibold text-center",
+            tone === "bad"
+              ? "bg-rose-500/15 text-rose-800 dark:text-rose-200"
+              : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+          )}
+        >
+          {caption}
+        </figcaption>
+      )}
+      <div className="relative flex-1 flex items-center justify-center min-h-0 p-1">
+        <Image
+          src={image.src}
+          alt={image.alt}
+          width={1280}
+          height={960}
+          sizes={present ? "50vw" : "(min-width: 768px) 30vw, 100vw"}
+          className="object-contain w-full h-auto max-h-full"
+        />
+      </div>
+    </figure>
+  );
+}
+
+function SlideImageR({
+  data,
+  present,
+}: {
+  data: SlideImageVisual["data"];
+  present?: boolean;
+}) {
+  return (
+    <Image
+      src={data.src}
+      alt={data.alt}
+      width={1920}
+      height={1080}
+      sizes={present ? "100vw" : "(min-width: 768px) 60vw, 100vw"}
+      className={clsx(
+        "object-contain w-auto h-auto",
+        present ? "max-w-full max-h-full" : "w-full max-h-[70vh]"
+      )}
+      priority
+    />
+  );
 }
 
 function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean }) {
