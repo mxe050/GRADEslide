@@ -108,6 +108,73 @@ html, body {
   color: #fff;
 }
 
+/* In-page 16:9 stage (used in normal mode, on top of every slide).
+   - Container queries scale text to the stage size, so it stays readable
+     on a 360px-wide phone and a 1400px laptop alike.
+   - Background gradient and rounded border for visual richness. */
+.reading-stage {
+  width: 100%;
+  max-width: 1280px;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  container-type: inline-size;
+  container-name: stage;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--card) 92%, var(--primary) 8%) 0%,
+    var(--card) 70%
+  );
+  border: 1px solid var(--card-border);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.18);
+}
+
+/* Stage content sized via container query units (cqw / cqh).
+   1cqw = 1% of stage width; on a 360px stage 4cqw = 14.4px — readable;
+   on a 1280px stage 4cqw = 51.2px — properly heading-sized. */
+.reading-stage .stage-title {
+  font-size: clamp(0.95rem, 3.6cqw, 2.6rem);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.reading-stage .stage-heading {
+  font-size: clamp(0.85rem, 3.0cqw, 2rem);
+  line-height: 1.25;
+  font-weight: 700;
+}
+.reading-stage .stage-body {
+  font-size: clamp(0.75rem, 2.4cqw, 1.4rem);
+  line-height: 1.55;
+}
+.reading-stage .stage-bullet {
+  font-size: clamp(0.75rem, 2.4cqw, 1.4rem);
+  line-height: 1.5;
+}
+.reading-stage .stage-table {
+  font-size: clamp(0.7rem, 2.1cqw, 1.2rem);
+  line-height: 1.4;
+}
+.reading-stage .stage-table th,
+.reading-stage .stage-table td {
+  padding: clamp(0.3rem, 1.2cqw, 0.9rem);
+}
+.reading-stage .stage-quote {
+  font-size: clamp(0.85rem, 2.8cqw, 1.7rem);
+  line-height: 1.5;
+}
+.reading-stage .stage-caption {
+  font-size: clamp(0.65rem, 1.7cqw, 0.95rem);
+  line-height: 1.4;
+}
+/* Inner padding scales with stage size too */
+.reading-stage .stage-inner {
+  padding: clamp(0.6rem, 2.4cqw, 1.5rem);
+}
+
+/* Present mode keeps its existing scaling (much larger fonts) */
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 

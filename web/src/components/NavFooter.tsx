@@ -17,18 +17,13 @@ export function NavFooter({ prevId, nextId, index, total }: Props) {
       className="sticky bottom-0 z-20 border-t border-[var(--card-border)] bg-[var(--background)]/95 backdrop-blur-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
+      {/*
+        Button order is intentional: NEXT on the LEFT, PREV on the RIGHT.
+        Designed for left-thumb mobile operation — most users hold the phone
+        with their left hand and reach the bottom-left corner most easily,
+        so the most-used action ("Next") sits there.
+      */}
       <div className="max-w-[1400px] mx-auto px-3 md:px-6 py-2.5 md:py-3 flex items-center gap-3">
-        <NavButton
-          disabled={!prevId}
-          onClick={() => prevId && router.push(`/slide/${prevId}`)}
-          aria="前のスライドへ"
-        >
-          <span aria-hidden="true">‹</span>
-          <span>前へ</span>
-        </NavButton>
-        <div className="text-center text-xs md:text-sm text-[var(--muted)] tabular-nums whitespace-nowrap">
-          {index + 1} / {total}
-        </div>
         <NavButton
           primary
           disabled={!nextId}
@@ -36,7 +31,18 @@ export function NavFooter({ prevId, nextId, index, total }: Props) {
           aria="次のスライドへ"
         >
           <span>次へ</span>
-          <span aria-hidden="true">›</span>
+          <span aria-hidden="true">→</span>
+        </NavButton>
+        <div className="text-center text-xs md:text-sm text-[var(--muted)] tabular-nums whitespace-nowrap">
+          {index + 1} / {total}
+        </div>
+        <NavButton
+          disabled={!prevId}
+          onClick={() => prevId && router.push(`/slide/${prevId}`)}
+          aria="前のスライドへ"
+        >
+          <span aria-hidden="true">←</span>
+          <span>前へ</span>
         </NavButton>
       </div>
     </footer>

@@ -13,26 +13,29 @@ export function NarrationPanel({ slide }: Props) {
     .map((id) => getCitation(id))
     .filter((c): c is Citation => Boolean(c));
   return (
-    <div className="fade-in flex flex-col gap-4 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] p-4 md:p-6 md:overflow-y-auto md:max-h-[calc(100svh-180px)]">
+    <div className="fade-in flex flex-col gap-4 md:gap-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] p-5 md:p-7 shadow-sm">
+      <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+        解説
+      </h3>
       {slide.warnings && slide.warnings.length > 0 && (
-        <div className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-fg)] px-3 py-2 text-sm flex gap-2">
-          <span aria-hidden="true">⚠️</span>
-          <ul className="list-none flex-1 space-y-1">
+        <div className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-fg)] px-4 py-3 text-base md:text-lg flex gap-3">
+          <span aria-hidden="true" className="text-lg">⚠️</span>
+          <ul className="list-none flex-1 space-y-1.5 leading-relaxed">
             {slide.warnings.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
           </ul>
         </div>
       )}
-      <div className="leading-relaxed">
+      <div className="text-base md:text-lg leading-loose md:leading-loose">
         <MarkdownText text={slide.narration} />
       </div>
       {cites.length > 0 && (
-        <section className="mt-2 pt-3 border-t border-[var(--card-border)]">
-          <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-2">
+        <section className="mt-3 pt-4 border-t border-[var(--card-border)]">
+          <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
             参考文献
           </h3>
-          <ol className="list-decimal pl-5 space-y-1.5 text-xs md:text-sm text-[var(--muted)]">
+          <ol className="list-decimal pl-6 space-y-2 text-sm md:text-base text-[var(--muted)] leading-relaxed">
             {cites.map((c) => (
               <li key={c.id} id={`ref-${c.id}`}>
                 {c.url ? (
@@ -53,11 +56,11 @@ export function NarrationPanel({ slide }: Props) {
         </section>
       )}
       {slide.speakerNotes && (
-        <details className="mt-2 text-xs text-[var(--muted)] border-t border-dashed border-[var(--card-border)] pt-3">
-          <summary className="cursor-pointer hover:text-[var(--foreground)]">
-            講演者ノート
+        <details className="mt-2 text-sm md:text-base text-[var(--muted)] border-t border-dashed border-[var(--card-border)] pt-4">
+          <summary className="cursor-pointer hover:text-[var(--foreground)] font-medium">
+            講演者ノートを表示
           </summary>
-          <p className="mt-2 whitespace-pre-line">{slide.speakerNotes}</p>
+          <p className="mt-3 whitespace-pre-line leading-relaxed">{slide.speakerNotes}</p>
         </details>
       )}
     </div>

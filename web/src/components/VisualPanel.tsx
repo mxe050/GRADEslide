@@ -23,9 +23,12 @@ interface Props {
   present?: boolean;
 }
 
+// VisualPanel renders a slide INSIDE a 16:9 container (the .reading-stage in
+// normal mode, the .present-stage in present mode). Both containers are
+// container-query roots, so child fonts can use cqw/clamp() to stay readable
+// on a 360px phone and a 1400px laptop alike.
+
 export function VisualPanel({ slide, present }: Props) {
-  // For slideImage, render the image full-bleed without any title overlay
-  // (the original PowerPoint slide already contains its own title and visuals).
   if (slide.visual.type === "slideImage") {
     return (
       <div
@@ -41,23 +44,21 @@ export function VisualPanel({ slide, present }: Props) {
   return (
     <div
       className={clsx(
-        "fade-in flex flex-col gap-4 md:gap-6 w-full",
-        present
-          ? "h-full justify-center text-white"
-          : "rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-sm p-5 md:p-8"
+        "fade-in w-full h-full flex flex-col stage-inner",
+        present ? "justify-center text-white" : "justify-start"
       )}
     >
-      {!present && (
-        <h2 className="text-xl md:text-3xl font-bold leading-tight tracking-tight">
-          {slide.title}
-        </h2>
-      )}
-      {present && (
-        <h2 className="text-3xl md:text-5xl font-bold leading-tight tracking-tight text-white mb-3">
-          {slide.title}
-        </h2>
-      )}
-      <Renderer slide={slide} present={present} />
+      <h2
+        className={clsx(
+          "stage-title mb-2",
+          present ? "text-white" : "text-[var(--foreground)]"
+        )}
+      >
+        {slide.title}
+      </h2>
+      <div className="flex-1 min-h-0 flex flex-col">
+        <Renderer slide={slide} present={present} />
+      </div>
     </div>
   );
 }
@@ -88,79 +89,6 @@ function Renderer({ slide, present }: Props) {
   }
 }
 
-function ImagePairR({
-  data,
-  present,
-}: {
-  data: ImagePairVisual["data"];
-  present?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-3 w-full h-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 flex-1 min-h-0">
-        <PairBlock
-          tone="bad"
-          image={data.leftImage}
-          caption={data.leftCaption}
-          present={present}
-        />
-        <PairBlock
-          tone="good"
-          image={data.rightImage}
-          caption={data.rightCaption}
-          present={present}
-        />
-      </div>
-    </div>
-  );
-}
-
-function PairBlock({
-  tone,
-  image,
-  caption,
-  present,
-}: {
-  tone: "good" | "bad";
-  image: { src: string; alt: string };
-  caption?: string;
-  present?: boolean;
-}) {
-  return (
-    <figure
-      className={clsx(
-        "rounded-xl overflow-hidden border-2 flex flex-col bg-white",
-        tone === "bad"
-          ? "border-rose-500/40"
-          : "border-emerald-500/50"
-      )}
-    >
-      {caption && (
-        <figcaption
-          className={clsx(
-            "px-3 py-1.5 text-sm font-semibold text-center",
-            tone === "bad"
-              ? "bg-rose-500/15 text-rose-800 dark:text-rose-200"
-              : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
-          )}
-        >
-          {caption}
-        </figcaption>
-      )}
-      <div className="relative flex-1 flex items-center justify-center min-h-0 p-1">
-        <Image
-          src={image.src}
-          alt={image.alt}
-          width={1280}
-          height={960}
-          sizes={present ? "50vw" : "(min-width: 768px) 30vw, 100vw"}
-          className="object-contain w-full h-auto max-h-full"
-        />
-      </div>
-    </figure>
-  );
-}
-
 function SlideImageR({
   data,
   present,
@@ -187,40 +115,37 @@ function SlideImageR({
 function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean }) {
   const accent =
     data.accent === "warning"
-      ? "border-l-8 border-[var(--warning-border)] bg-[var(--warning-bg)]/40"
+      ? "border-l-[6px] border-[var(--warning-border)] bg-[var(--warning-bg)]/40"
       : data.accent === "good"
-      ? "border-l-8 border-[var(--good)]"
+      ? "border-l-[6px] border-[var(--good)]"
       : "";
   return (
-    <div className={clsx("flex flex-col gap-4 md:gap-5 rounded-xl p-4 md:p-6", accent)}>
+    <div
+      className={clsx(
+        "flex-1 flex flex-col gap-3 rounded-xl",
+        accent && "pl-3",
+        accent
+      )}
+    >
       {data.heading && (
         <h3
           className={clsx(
-            "font-bold leading-snug",
-            present ? "text-3xl md:text-4xl" : "text-lg md:text-2xl"
+            "stage-heading",
+            present ? "text-white" : "text-[var(--primary)]"
           )}
         >
           {data.heading}
         </h3>
       )}
       {data.body && (
-        <MarkdownText
-          text={data.body}
-          className={clsx(
-            "leading-relaxed",
-            present ? "text-2xl md:text-3xl" : "text-base md:text-lg"
-          )}
-        />
+        <div className="stage-body">
+          <MarkdownText text={data.body} />
+        </div>
       )}
       {data.bullets && data.bullets.length > 0 && (
-        <ul
-          className={clsx(
-            "list-disc pl-6 md:pl-8 space-y-3 md:space-y-4",
-            present ? "text-2xl md:text-3xl" : "text-base md:text-lg"
-          )}
-        >
+        <ul className="stage-bullet list-disc pl-[1.4em] space-y-[0.5em] flex-1 min-h-0">
           {data.bullets.map((b, i) => (
-            <li key={i} className="visual-bullet leading-relaxed">
+            <li key={i} className="visual-bullet">
               <MarkdownText text={b} inlineOnly />
             </li>
           ))}
@@ -233,21 +158,21 @@ function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean 
 function TableR({ data, present }: { data: TableVisual["data"]; present?: boolean }) {
   const firstColIsIndex = data.headers[0] === "#" || data.headers[0]?.length === 1;
   return (
-    <div className="overflow-x-auto">
-      <table
-        className={clsx(
-          "w-full border-collapse",
-          present ? "text-xl md:text-2xl" : "text-base md:text-lg"
-        )}
-      >
+    <div className="flex-1 min-h-0 overflow-auto">
+      <table className="stage-table w-full border-collapse">
         <thead>
-          <tr className="bg-[var(--primary)]/15">
+          <tr
+            className={clsx(
+              "bg-[var(--primary)]/15",
+              present && "bg-white/15"
+            )}
+          >
             {data.headers.map((h, i) => (
               <th
                 key={i}
                 className={clsx(
-                  "border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 text-left font-bold",
-                  firstColIsIndex && i === 0 && "w-16 text-center"
+                  "border border-[var(--card-border)] text-left font-bold align-top",
+                  firstColIsIndex && i === 0 && "w-[6%] text-center"
                 )}
               >
                 {h}
@@ -257,13 +182,21 @@ function TableR({ data, present }: { data: TableVisual["data"]; present?: boolea
         </thead>
         <tbody>
           {data.rows.map((row, ri) => (
-            <tr key={ri} className="even:bg-[var(--card-border)]/30">
+            <tr
+              key={ri}
+              className={clsx(
+                "even:bg-[var(--card-border)]/30",
+                present && "even:bg-white/5"
+              )}
+            >
               {row.map((cell, ci) => (
                 <td
                   key={ci}
                   className={clsx(
-                    "border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 align-top leading-relaxed",
-                    firstColIsIndex && ci === 0 && "text-center font-bold text-[var(--primary)]"
+                    "border border-[var(--card-border)] align-top",
+                    firstColIsIndex &&
+                      ci === 0 &&
+                      "text-center font-bold text-[var(--primary)]"
                   )}
                 >
                   <MarkdownText text={cell} inlineOnly />
@@ -274,7 +207,7 @@ function TableR({ data, present }: { data: TableVisual["data"]; present?: boolea
         </tbody>
       </table>
       {data.caption && (
-        <p className="text-sm md:text-base text-[var(--muted)] mt-3 italic">
+        <p className="stage-caption text-[var(--muted)] mt-2 italic">
           {data.caption}
         </p>
       )}
@@ -290,30 +223,41 @@ function ComparisonR({
   present?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table
-        className={clsx(
-          "w-full border-collapse",
-          present ? "text-xl md:text-2xl" : "text-base md:text-lg"
-        )}
-      >
+    <div className="flex-1 min-h-0 overflow-auto">
+      <table className="stage-table w-full border-collapse">
         <thead>
           <tr>
-            <th className="border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 bg-rose-500/15 text-left font-bold w-1/2">
+            <th
+              className={clsx(
+                "border border-[var(--card-border)] text-left font-bold w-1/2",
+                present ? "bg-rose-400/30" : "bg-rose-500/15"
+              )}
+            >
               {data.leftHeader}
             </th>
-            <th className="border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 bg-emerald-500/15 text-left font-bold w-1/2">
+            <th
+              className={clsx(
+                "border border-[var(--card-border)] text-left font-bold w-1/2",
+                present ? "bg-emerald-400/30" : "bg-emerald-500/15"
+              )}
+            >
               {data.rightHeader}
             </th>
           </tr>
         </thead>
         <tbody>
           {data.rows.map((row, ri) => (
-            <tr key={ri} className="even:bg-[var(--card-border)]/30">
-              <td className="border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 align-top leading-relaxed">
+            <tr
+              key={ri}
+              className={clsx(
+                "even:bg-[var(--card-border)]/30",
+                present && "even:bg-white/5"
+              )}
+            >
+              <td className="border border-[var(--card-border)] align-top">
                 <MarkdownText text={row.left} inlineOnly />
               </td>
-              <td className="border border-[var(--card-border)] px-4 py-3 md:px-5 md:py-4 align-top leading-relaxed">
+              <td className="border border-[var(--card-border)] align-top">
                 <MarkdownText text={row.right} inlineOnly />
               </td>
             </tr>
@@ -321,7 +265,7 @@ function ComparisonR({
         </tbody>
       </table>
       {data.caption && (
-        <p className="text-sm md:text-base text-[var(--muted)] mt-3 italic">
+        <p className="stage-caption text-[var(--muted)] mt-2 italic">
           {data.caption}
         </p>
       )}
@@ -334,13 +278,18 @@ function QuoteR({ data, present }: { data: QuoteVisual["data"]; present?: boolea
   return (
     <figure
       className={clsx(
-        "border-l-8 border-[var(--quote-border)] pl-6 md:pl-8 py-3 md:py-4",
-        present ? "text-3xl md:text-4xl" : "text-lg md:text-2xl"
+        "flex-1 flex flex-col justify-center stage-quote border-l-[6px] pl-4",
+        present ? "border-[var(--primary-hover)] text-white" : "border-[var(--quote-border)]"
       )}
     >
-      <blockquote className="leading-relaxed font-medium">「{data.text}」</blockquote>
+      <blockquote className="font-medium">「{data.text}」</blockquote>
       {cite && (
-        <figcaption className="mt-4 text-base md:text-lg text-[var(--muted)]">
+        <figcaption
+          className={clsx(
+            "stage-caption mt-3",
+            present ? "text-white/70" : "text-[var(--muted)]"
+          )}
+        >
           — {cite.label}
         </figcaption>
       )}
@@ -351,14 +300,14 @@ function QuoteR({ data, present }: { data: QuoteVisual["data"]; present?: boolea
 function ListR({ data, present }: { data: ListVisual["data"]; present?: boolean }) {
   const className = clsx(
     data.ordered ? "list-decimal" : "list-disc",
-    "pl-8 md:pl-10 space-y-4 md:space-y-5",
-    present ? "text-2xl md:text-3xl" : "text-base md:text-lg"
+    "stage-bullet pl-[1.6em] space-y-[0.6em] flex-1 min-h-0",
+    present ? "text-white" : ""
   );
   const items = data.items.map((item, i) => (
-    <li key={i} className="leading-relaxed visual-bullet">
+    <li key={i} className="visual-bullet leading-relaxed">
       <MarkdownText text={item.text} inlineOnly />
       {item.subItems && item.subItems.length > 0 && (
-        <ul className="list-disc pl-6 mt-2 md:mt-3 space-y-2 text-[0.85em] text-[var(--muted)]">
+        <ul className="list-disc pl-[1.4em] mt-[0.3em] space-y-[0.3em] text-[0.78em] opacity-80">
           {item.subItems.map((s, j) => (
             <li key={j}>
               <MarkdownText text={s} inlineOnly />
@@ -373,11 +322,11 @@ function ListR({ data, present }: { data: ListVisual["data"]; present?: boolean 
 
 function ImageR({ data, present }: { data: ImageVisual["data"]; present?: boolean }) {
   return (
-    <figure className="flex flex-col gap-3">
+    <figure className="flex-1 min-h-0 flex flex-col gap-2 items-center">
       <div
         className={clsx(
-          "relative w-full overflow-hidden rounded-xl bg-white border border-[var(--card-border)] flex items-center justify-center",
-          present ? "max-h-[75vh]" : "max-h-[65vh]"
+          "relative flex-1 min-h-0 w-full overflow-hidden rounded-lg flex items-center justify-center",
+          present ? "" : "bg-white border border-[var(--card-border)]"
         )}
       >
         <Image
@@ -386,17 +335,15 @@ function ImageR({ data, present }: { data: ImageVisual["data"]; present?: boolea
           width={1600}
           height={900}
           sizes={present ? "100vw" : "(min-width: 768px) 60vw, 100vw"}
-          className="w-full h-auto object-contain max-h-full"
+          className="w-full h-full object-contain"
           priority
         />
       </div>
       {data.caption && (
         <figcaption
           className={clsx(
-            "text-center italic leading-relaxed",
-            present
-              ? "text-xl md:text-2xl text-white/80"
-              : "text-base md:text-lg text-[var(--muted)]"
+            "stage-caption italic text-center",
+            present ? "text-white/80" : "text-[var(--muted)]"
           )}
         >
           {data.caption}
@@ -413,32 +360,33 @@ function ImageCardR({
   data: ImageCardVisual["data"];
   present?: boolean;
 }) {
-  // Image on top (full width), bullets below — readable, no cramping.
   return (
-    <div className="flex flex-col gap-5">
-      <div className="relative w-full overflow-hidden rounded-xl border border-[var(--card-border)] bg-white">
+    <div className="flex-1 min-h-0 grid gap-3 grid-cols-1 @sm:grid-cols-[5fr_6fr]">
+      <div
+        className={clsx(
+          "relative w-full overflow-hidden rounded-xl flex items-center justify-center",
+          present ? "" : "bg-white border border-[var(--card-border)]"
+        )}
+      >
         <Image
           src={data.image.src}
           alt={data.image.alt}
-          width={1600}
-          height={900}
-          sizes="(min-width: 768px) 60vw, 100vw"
-          className="w-full h-auto object-contain max-h-[55vh]"
+          width={1280}
+          height={960}
+          sizes="(min-width: 768px) 30vw, 100vw"
+          className="w-full h-auto max-h-full object-contain"
           priority
         />
       </div>
-      <ul
-        className={clsx(
-          "list-disc pl-6 md:pl-8 space-y-3 md:space-y-4",
-          present ? "text-2xl md:text-3xl" : "text-base md:text-lg"
-        )}
-      >
-        {data.bullets.map((b, i) => (
-          <li key={i} className="visual-bullet leading-relaxed">
-            <MarkdownText text={b} inlineOnly />
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-2 min-h-0 overflow-auto">
+        <ul className="stage-bullet list-disc pl-[1.4em] space-y-[0.5em]">
+          {data.bullets.map((b, i) => (
+            <li key={i} className="visual-bullet">
+              <MarkdownText text={b} inlineOnly />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -451,8 +399,8 @@ function ImageComparisonR({
   present?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+    <div className="flex flex-col gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 md:gap-3 flex-1 min-h-0">
         <ComparisonImageBlock
           tone="bad"
           header={data.leftHeader}
@@ -466,32 +414,77 @@ function ImageComparisonR({
           present={present}
         />
       </div>
-      <div className="overflow-x-auto">
-        <table className={clsx("w-full border-collapse", present ? "text-lg md:text-xl" : "text-sm md:text-base")}>
-          <tbody>
-            {data.rows.map((row, ri) => (
-              <tr key={ri} className="even:bg-[var(--card-border)]/20">
-                <td className="border border-[var(--card-border)] px-3 py-2 align-top w-1/2">
-                  <span className="md:hidden block text-xs font-semibold text-rose-700 mb-1">
-                    {data.leftHeader}
-                  </span>
-                  <MarkdownText text={row.left} inlineOnly />
-                </td>
-                <td className="border border-[var(--card-border)] px-3 py-2 align-top w-1/2">
-                  <span className="md:hidden block text-xs font-semibold text-emerald-700 mb-1">
-                    {data.rightHeader}
-                  </span>
-                  <MarkdownText text={row.right} inlineOnly />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {data.caption && (
-          <p className="text-xs text-[var(--muted)] mt-2 italic">{data.caption}</p>
-        )}
-      </div>
     </div>
+  );
+}
+
+function ImagePairR({
+  data,
+  present,
+}: {
+  data: ImagePairVisual["data"];
+  present?: boolean;
+}) {
+  return (
+    <div className="flex-1 min-h-0 grid grid-cols-2 gap-2 md:gap-3">
+      <PairBlock
+        tone="bad"
+        image={data.leftImage}
+        caption={data.leftCaption}
+        present={present}
+      />
+      <PairBlock
+        tone="good"
+        image={data.rightImage}
+        caption={data.rightCaption}
+        present={present}
+      />
+    </div>
+  );
+}
+
+function PairBlock({
+  tone,
+  image,
+  caption,
+  present,
+}: {
+  tone: "good" | "bad";
+  image: { src: string; alt: string };
+  caption?: string;
+  present?: boolean;
+}) {
+  return (
+    <figure
+      className={clsx(
+        "rounded-xl overflow-hidden border-2 flex flex-col bg-white min-h-0",
+        tone === "bad" ? "border-rose-500/40" : "border-emerald-500/50"
+      )}
+    >
+      {caption && (
+        <figcaption
+          className={clsx(
+            "stage-caption font-semibold text-center px-2 py-1",
+            tone === "bad"
+              ? "bg-rose-500/15 text-rose-800"
+              : "bg-emerald-500/15 text-emerald-800",
+            present && "py-1.5"
+          )}
+        >
+          {caption}
+        </figcaption>
+      )}
+      <div className="relative flex-1 min-h-0 flex items-center justify-center p-1">
+        <Image
+          src={image.src}
+          alt={image.alt}
+          width={1280}
+          height={960}
+          sizes="(min-width: 768px) 30vw, 50vw"
+          className="object-contain w-full h-full"
+        />
+      </div>
+    </figure>
   );
 }
 
@@ -509,27 +502,29 @@ function ComparisonImageBlock({
   return (
     <figure
       className={clsx(
-        "rounded-xl overflow-hidden border-2",
-        tone === "bad"
-          ? "border-rose-500/40 bg-rose-500/5"
-          : "border-emerald-500/50 bg-emerald-500/5"
+        "rounded-xl overflow-hidden border-2 flex flex-col bg-white min-h-0",
+        tone === "bad" ? "border-rose-500/40" : "border-emerald-500/50"
       )}
     >
       <figcaption
         className={clsx(
-          "px-3 py-1.5 text-sm font-semibold",
-          tone === "bad" ? "bg-rose-500/15 text-rose-800 dark:text-rose-200" : "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
+          "stage-caption font-semibold text-center px-2 py-1",
+          tone === "bad"
+            ? "bg-rose-500/15 text-rose-800"
+            : "bg-emerald-500/15 text-emerald-800",
+          present && "py-1.5"
         )}
       >
         {header}
       </figcaption>
-      <div className={clsx("relative bg-white", present ? "max-h-[40vh]" : "")}>
+      <div className="relative flex-1 min-h-0 flex items-center justify-center p-1">
         <Image
           src={image.src}
           alt={image.alt}
           width={1280}
           height={720}
-          className="w-full h-auto object-contain"
+          sizes="(min-width: 768px) 30vw, 50vw"
+          className="object-contain w-full h-full"
         />
       </div>
     </figure>
