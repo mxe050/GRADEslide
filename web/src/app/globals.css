@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #0369a1;
+  --primary-hover: #0284c7;
+  --accent: #b45309;
+  --good: #15803d;
+  --muted: #64748b;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --quote-border: #0ea5e9;
+  --warning-bg: #fef3c7;
+  --warning-fg: #78350f;
+  --warning-border: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0b1220;
+    --foreground: #f1f5f9;
+    --primary: #38bdf8;
+    --primary-hover: #7dd3fc;
+    --accent: #fbbf24;
+    --good: #4ade80;
+    --muted: #94a3b8;
+    --card: #111c2e;
+    --card-border: #1e293b;
+    --quote-border: #38bdf8;
+    --warning-bg: #2a1d05;
+    --warning-fg: #fde68a;
+    --warning-border: #b45309;
+  }
+}
+
+/* Manual override (always wins over system preference) */
+:root[data-theme="dark"] {
+  --background: #0b1220;
+  --foreground: #f1f5f9;
+  --primary: #38bdf8;
+  --primary-hover: #7dd3fc;
+  --accent: #fbbf24;
+  --good: #4ade80;
+  --muted: #94a3b8;
+  --card: #111c2e;
+  --card-border: #1e293b;
+  --quote-border: #38bdf8;
+  --warning-bg: #2a1d05;
+  --warning-fg: #fde68a;
+  --warning-border: #b45309;
+}
+
+:root[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #0369a1;
+  --primary-hover: #0284c7;
+  --accent: #b45309;
+  --good: #15803d;
+  --muted: #64748b;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --quote-border: #0ea5e9;
+  --warning-bg: #fef3c7;
+  --warning-fg: #78350f;
+  --warning-border: #f59e0b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-quote-border: var(--quote-border);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-border: var(--warning-border);
+  --font-sans: var(--font-noto-jp), system-ui, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+}
+
+html, body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.text-scale-sm { font-size: 15px; line-height: 1.65; }
+.text-scale-md { font-size: 16.5px; line-height: 1.7; }
+.text-scale-lg { font-size: 18.5px; line-height: 1.75; }
+
+.present-stage {
+  aspect-ratio: 16 / 9;
+  /* Fit the largest 16:9 box that fits both 100vw and 100svh.
+     Without this, on tall (portrait) viewports the width fills 100% and the
+     forced 16:9 height overflows the screen. */
+  width: min(100%, calc(100svh * 16 / 9));
+  max-width: 1600px;
+  max-height: 100svh;
+  background: #000;
+  color: #fff;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.markdown-body p { margin: 0.6em 0; }
+.markdown-body p:first-child { margin-top: 0; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body strong { color: var(--primary); font-weight: 700; }
+.markdown-body em { color: var(--muted); font-style: italic; }
+.markdown-body code {
+  background: var(--card-border);
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.visual-bullet strong { color: var(--primary); font-weight: 700; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.25s ease-out both; }

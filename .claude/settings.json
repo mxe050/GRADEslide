@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Resolve-Path *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:*)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://127.0.0.1:*)",
+      "Bash(npm.cmd -v)",
+      "Bash(node -v)"
+    ]
+  }
+}

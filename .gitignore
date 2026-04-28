@@ -1,0 +1,41 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Node / Next.js (web/)
+web/node_modules/
+web/.next/
+web/out/
+web/build/
+web/.vercel/
+web/next-env.d.ts.bak
+web/*.log
+web/.env*.local
+web/coverage/
+
+# Python (pptx_work/)
+pptx_work/__pycache__/
+pptx_work/*.pyc
+pptx_work/.venv/
+
+# Generated/source data — re-buildable from extract.py + build-slides.mjs
+pptx_work/extracted_output/
+
+# Original PowerPoint source — keep local, do not redistribute
+pptx_work/sample.pptx
+
+# Original intro images at repo root (Japanese filenames, kept local).
+# Note: leading slash anchors to repo root so web/public/images/intro/ is unaffected.
+/intro/
+
+# Local helper notes
+新しいテキスト ドキュメント.txt
+
+# Ad-hoc temp
+*.tmp
+.cache/

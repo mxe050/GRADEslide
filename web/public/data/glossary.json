@@ -1,0 +1,117 @@
+{
+  "version": "0.1.0",
+  "terms": [
+    {
+      "id": "grade",
+      "term": "GRADEアプローチ",
+      "aliases": ["GRADE", "Grading of Recommendations Assessment, Development and Evaluation"],
+      "definition": "エビデンスの確実性と推奨の強さを体系的に評価する方法論。WHO、コクラン、Minds など世界中の診療ガイドラインで採用されている。"
+    },
+    {
+      "id": "ebm",
+      "term": "EBM",
+      "aliases": ["Evidence-Based Medicine", "根拠に基づく医療"],
+      "definition": "個々の患者のケアに関する意思決定において、現在得られる最良の根拠を、良心的に・明示的に・思慮深く用いること (Sackett 1996)。"
+    },
+    {
+      "id": "sr",
+      "term": "システマティックレビュー",
+      "aliases": ["SR", "systematic review"],
+      "definition": "あらかじめ定めたプロトコルに従い、関連する研究を系統的・網羅的に検索・選定・統合する手法。EBMの最高位のエビデンス源。"
+    },
+    {
+      "id": "meta",
+      "term": "メタ分析",
+      "aliases": ["meta-analysis"],
+      "definition": "複数の研究結果を量的に統合する統計手法。SR の中で実施されることが多い。各研究の重みは標本サイズや精度を反映する。"
+    },
+    {
+      "id": "nma",
+      "term": "ネットワークメタ分析",
+      "aliases": ["NMA", "network meta-analysis"],
+      "definition": "対照に対して複数の介入を同時に評価するメタ分析。直接比較と間接比較を組み合わせて治療同士の優劣を推定する。"
+    },
+    {
+      "id": "rct",
+      "term": "RCT",
+      "aliases": ["ランダム化比較試験", "randomised controlled trial"],
+      "definition": "参加者を介入群と対照群にランダム割付して比較する研究デザイン。バイアスが少なく、効果推定の信頼性が高い。"
+    },
+    {
+      "id": "certainty",
+      "term": "エビデンスの確実性",
+      "aliases": ["certainty of evidence", "確実性"],
+      "definition": "効果推定値がどの程度真の効果に近いと考えられるかの確からしさ。GRADE では 高・中・低・とても低い の4段階。"
+    },
+    {
+      "id": "rob",
+      "term": "バイアスのリスク",
+      "aliases": ["risk of bias", "ROB", "研究の限界"],
+      "definition": "研究の結果が真の効果から系統的に逸脱する可能性。ランダム化・盲検化・脱落・追跡期間などをチェックする。"
+    },
+    {
+      "id": "inconsistency",
+      "term": "非一貫性",
+      "aliases": ["inconsistency"],
+      "definition": "複数の研究間で結果が大きく異なる状態。点推定値・信頼区間の重なり・I² 統計量などで評価する。"
+    },
+    {
+      "id": "indirectness",
+      "term": "非直接性",
+      "aliases": ["indirectness"],
+      "definition": "PICO（対象・介入・比較・アウトカム）が想定する臨床疑問と、実際の研究の集団・介入・アウトカムが異なる程度。"
+    },
+    {
+      "id": "imprecision",
+      "term": "不精確さ",
+      "aliases": ["imprecision"],
+      "definition": "ランダム誤差により効果推定値の幅 (95% 信頼区間) が大きい状態。サンプルサイズが小さい研究で起きやすい。"
+    },
+    {
+      "id": "pubbias",
+      "term": "出版バイアス",
+      "aliases": ["publication bias"],
+      "definition": "有意でない結果や否定的な結果が公表されにくいことで生じる偏り。漏斗プロットや Egger 検定などで評価する。"
+    },
+    {
+      "id": "pico",
+      "term": "PICO",
+      "aliases": ["P/I/C/O"],
+      "definition": "臨床疑問を構造化する枠組み: Patient (対象)、Intervention (介入)、Comparison (比較対照)、Outcome (アウトカム)。"
+    },
+    {
+      "id": "strength",
+      "term": "推奨の強さ",
+      "aliases": ["strength of recommendation"],
+      "definition": "推奨に従うべきかの確信度。GRADE では「強い推奨」「条件付き (弱い) 推奨」の2段階。エビデンスの確実性とは別の概念。"
+    },
+    {
+      "id": "gps",
+      "term": "Good Practice Statement",
+      "aliases": ["GPS"],
+      "definition": "エビデンス収集が非効率だが明確に必要な行動を示す声明。5要件 (代替案不在・必要性・正味の効果・推論根拠・実行可能性) を満たす必要がある。"
+    },
+    {
+      "id": "etd",
+      "term": "Evidence-to-Decisionフレームワーク",
+      "aliases": ["EtD表", "EtD", "Evidence to Decision"],
+      "definition": "推奨を作成する際の意思決定プロセスを透明化する表。問題・益と害・確実性・価値観・コスト・公平性・容認性・実行可能性を一覧化する。"
+    },
+    {
+      "id": "adolopment",
+      "term": "GRADE-ADOLOPMENT",
+      "definition": "既存の SR や CPG を新しい状況に適応 (adopt + adapt + de novo) させて効率的に診療ガイドラインを作成する方法論。"
+    },
+    {
+      "id": "robust",
+      "term": "ROBUST-RCT",
+      "definition": "ランダム化比較試験のバイアスリスクを評価する改訂版ツール。Cochrane RoB 2 を改良したもの。"
+    },
+    {
+      "id": "iom",
+      "term": "IOM",
+      "aliases": ["Institute of Medicine", "HMD", "Health and Medicine Division"],
+      "definition": "米国の医学・医療政策に関する独立機関。2011年に「信頼できる診療ガイドライン」の定義を公表した。現 HMD。"
+    }
+  ]
+}
