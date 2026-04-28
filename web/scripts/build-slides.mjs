@@ -155,6 +155,41 @@ function imageRelPath(imageFile) {
   return `/images/slides/${basename}`;
 }
 
+// ---------- auto-dialogue ----------
+//
+// For S1〜S106, we don't have hand-written dialogue scripts (that would mean
+// rewriting 100 narrations by hand). Instead, we wrap the auto-extracted
+// narration in a 2-3 turn dialogue: 初心者 frames a question from the title,
+// EBM先生 explains using the extracted body text, 初心者 closes with a brief
+// recap. This is consistent across slides and keeps the dialogue tone the
+// app uses for every screen.
+//
+// Curated overrides (REVISED_OVERRIDES below) replace these with hand-
+// crafted dialogues for the most important slides.
+function autoDialogue(title, rawBody) {
+  if (!rawBody) {
+    return [
+      `初心者: 「${title}」って、どんな話なんですか？`,
+      `EBM先生: このスライドは原 PowerPoint には本文が含まれていなかったので、解説テキストは準備中です。タイトルから内容を想像し、Core GRADE 1〜6 の該当章を参照してください。`,
+    ].join("\n\n");
+  }
+
+  // Split body into 1〜3 chunks for the teacher's reply.
+  const sentences = rawBody
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  // Use up to 4 sentences for the teacher's primary explanation
+  const teacherText = sentences.slice(0, 6).join("\n\n");
+
+  return [
+    `初心者: 「${title}」って、どういうことですか？`,
+    `EBM先生: ${teacherText}`,
+    `初心者: なるほど、ここがポイントなんですね。`,
+  ].join("\n\n");
+}
+
 // ---------- per-slide builder ----------
 
 function buildSlide(raw, introCount) {
@@ -185,9 +220,8 @@ function buildSlide(raw, introCount) {
     const t = shapeText(sh);
     if (t) narrationParts.push(t);
   }
-  const narration =
-    narrationParts.join("\n\n") ||
-    `*このスライドの解説テキストは原 PowerPoint から自動抽出されています。*`;
+  const rawBody = narrationParts.join("\n\n");
+  const narration = autoDialogue(title, rawBody);
 
   // ---- decide visual ----
   let visual;
@@ -292,9 +326,15 @@ const REVISED_OVERRIDES = {
         citationId: "sackett1996",
       },
     },
-    narration:
-      "EBMの古典的な定義です。ポイントは「個々の患者」「最良の根拠」「思慮深く」の3つ。\n\n「最良の根拠」とは何か、「思慮深く用いる」とはどういうことか — これを理解することが、診療ガイドラインを理解する出発点です。",
-    citationIds: ["sackett1996"],
+    narration: [
+      "初心者: EBM って言葉はよく聞きますが、定義は何ですか?",
+      "EBM先生: Sackett 1996 の古典的定義がこれです。3 つのキーワードに注目してください: **個々の患者**、**最良の根拠**、**思慮深く**。",
+      "初心者: 「個々の患者」が最初に来るんですね。意外でした。",
+      "EBM先生: そう、EBM はガイドラインを機械的に当てはめるものではないんです。ガイドラインの根拠を理解した上で、目の前の患者に合わせて**思慮深く**適用する。これが本質です。",
+      "初心者: 「最良の根拠」とは、つまり SR ですか?",
+      "EBM先生: 理想的にはそうです。Users' Guides 第3版 (2015) でも、EBM の3原則の1つ目は「最良のエビデンス、理想的には SR」とされています。次のスライドで詳しく見ていきましょう。",
+    ].join("\n\n"),
+    citationIds: ["sackett1996", "usersGuides2015", "gradeHandbook"],
   },
   S8: {
     title: "EBMの3つの基本原則",
@@ -315,9 +355,15 @@ const REVISED_OVERRIDES = {
         ],
       },
     },
-    narration:
-      "EBMの3つの基本原則。これは Users' Guides to the Medical Literature 第3版（2015）に明記されているものです。\n\n特に3つ目の「エビデンスだけでは十分ではない」が重要です。患者の価値観、コスト、実行可能性まで考えなければ、本当の臨床決断はできません。",
-    citationIds: ["usersGuides2015"],
+    narration: [
+      "初心者: EBM の 3 原則って、何ですか?",
+      "EBM先生: Users' Guides 第3版 (2015) に明記されている 3 原則です。\n**①最良のエビデンス**: 理想的には SR。\n**②確実性の評価**: そのエビデンスがどれくらい確かか。\n**③エビデンスだけでは不十分**: 価値観・コスト・実行可能性が必要。",
+      "初心者: ③が一番大事そうですね。",
+      "EBM先生: その通り。多くの人が見落とすのが ③です。「最高の RCT」があっても、それだけでは臨床決断にならない。患者の価値観、コスト、実行可能性 — これらを統合して初めて意思決定なんです。",
+      "初心者: GRADE はこれをどう実装するんですか?",
+      "EBM先生: **EtD (Evidence-to-Decision) フレームワーク**で実装します。エビデンスとは別に、価値観・コスト・公平性・容認性・実行可能性を構造化して評価する。Schünemann 2016 が標準化した枠組みです。",
+    ].join("\n\n"),
+    citationIds: ["usersGuides2015", "etdSchunemann2016", "gradeHandbook"],
   },
   S25: {
     title: "エビデンスの確実性を下げる5要因",
@@ -350,9 +396,22 @@ const REVISED_OVERRIDES = {
         ],
       },
     },
-    narration:
-      "エビデンスの確実性を下げる5要因。これがGRADEアプローチの中核です。\n\nそれぞれの要因について、5つの「もし〜だったら」を考えていきます。これらをチェックすることで、「単なるメタ分析の結果」ではなく「どれくらい信頼できる結果か」を評価できます。",
-    citationIds: ["coreGRADE1", "coreGRADE2", "coreGRADE4"],
+    narration: [
+      "初心者: GRADE の中核って、結局何ですか?",
+      "EBM先生: **エビデンスの確実性を下げる 5 要因**を体系的に評価することです。Core GRADE 1 で詳述されています:\n**①バイアス (RoB)** — 研究そのもののバイアス\n**②非一貫性** — 研究間で結果がばらつく\n**③非直接性** — PICO がずれている\n**④不精確さ** — CI が広い、効果なしや MID をまたぐ\n**⑤出版バイアス** — 隠された研究の可能性",
+      "初心者: 5 要因をどうチェックするんですか?",
+      "EBM先生: 各要因に「**もし〜だったら**」のチェック観点があります。Core GRADE 2〜5 で各要因の詳細チェックリストが提供されています。例えば不精確さなら「サンプル数が少ない」「CI が MID をまたぐ」など。",
+      "初心者: 観察研究は最初から「低」スタートで、これでさらに下がるんでしたね。",
+      "EBM先生: 正解です。RCT は「高」スタート、観察研究は「低」スタート。そこから 5 要因でダウングレード。観察研究はアップグレード要因 (大きな効果・用量反応・交絡が結果を弱める) もある。これが GRADE の柔軟さです。",
+    ].join("\n\n"),
+    citationIds: [
+      "coreGRADE1",
+      "coreGRADE2",
+      "coreGRADE3",
+      "coreGRADE4",
+      "coreGRADE5",
+      "gradeHandbook",
+    ],
   },
   S33: {
     title: "診療ガイドラインの定義（IOM／HMD 2011）",
@@ -363,10 +422,16 @@ const REVISED_OVERRIDES = {
         citationId: "iom2011",
       },
     },
-    narration:
-      "これが現在世界的に使われている診療ガイドラインの定義です。「ふーん、そうなんだ」ではなく、「なるほど、だからそうなのか」と理解できるように、ここまで一緒に考えてきました。",
+    narration: [
+      "初心者: 診療ガイドラインの正式な定義って、何ですか?",
+      "EBM先生: IOM (現 HMD) 2011 がこの定義を世界標準として確立しました。**「SR と利益と害の評価に基づいて、患者ケアを最適化する推奨を含む記述」**。",
+      "初心者: SR + 益と害の評価 + 推奨、の 3 要素ですね。",
+      "EBM先生: その通り。これに**従わないものは「信頼できない診療ガイドライン」**とされます。専門家の合意だけ、利益のみ評価、推奨に強さがない — これらは IOM 定義を満たしません。",
+      "初心者: 厳しい定義ですね。",
+      "EBM先生: 患者ケアの政策を左右するからこそです。Guyatt 2023 はこの定義をベースに、**信頼できるガイドラインを見抜く 6 つの質問**を提案しています。臨床医が目の前のガイドラインを評価するチェックリストとして使えます。",
+    ].join("\n\n"),
     warnings: ["この定義に従っていないものは「信頼できない診療ガイドライン」となる"],
-    citationIds: ["iom2011"],
+    citationIds: ["iom2011", "guyatt2023sixQuestions", "gradeHandbook"],
   },
   S86: {
     title: "Good Practice Statement (GPS) の5要件",
@@ -400,8 +465,17 @@ const REVISED_OVERRIDES = {
         caption: "GPSは5要件すべてを満たす必要がある",
       },
     },
-    narration:
-      "Good Practice Statement、略してGPSは、エビデンスの確実性や推奨の強さの正式評価には適さないが、明確に必要な行動を示す声明です。",
+    narration: [
+      "初心者: GPS って、何ですか? GPS の機能の話?",
+      "EBM先生: 違います (笑)。**Good Practice Statement** の略。GRADE の正式な推奨手順 (確実性評価 + EtD) は通さないが、明らかに必要な行動を示す声明です。",
+      "初心者: 例えばどんな?",
+      "EBM先生: 「医療スタッフは手洗いをする」のような、エビデンス収集が時間の浪費にしかならない自明な行動。これに毎回 SR をやるのは無意味です。",
+      "初心者: でも、何でもかんでも GPS にしちゃうと甘くなりませんか?",
+      "EBM先生: そこで **5 要件**です。① エビデンス収集が非効率、② メッセージが医療行為に必要、③ 関連アウトカム全体で正味プラスの効果、④ 推論根拠の文書化、⑤ 明確で実行可能。**全部満たさないと GPS にできない**。基準は厳しいんです。",
+      "初心者: 安易に「専門家の意見」に逃げないための歯止めなんですね。",
+      "EBM先生: その通り。信頼できるガイドラインなら、**非公式な推奨は完全に避けられる**はずです。",
+    ].join("\n\n"),
+    citationIds: ["etdSchunemann2016", "gradeHandbook"],
   },
   S99: {
     title: "「有意差なし」≠「差がない」",
@@ -421,9 +495,17 @@ const REVISED_OVERRIDES = {
           "仮想例：新薬 vs プラセボ、リスク比 1.20（95%CI: −3% 〜 +48%）、P=0.091",
       },
     },
-    narration:
-      "P値至上主義からの脱却が、近年の重要なテーマです。「有意差がない」ことは「差がない」ことを意味しません。",
-    citationIds: ["amrhein2019"],
+    narration: [
+      "初心者: 「有意差なし」と「差がない」って、同じじゃないんですか?",
+      "EBM先生: **完全に違います**。これは現代の最重要トピックの一つです。Amrhein 2019 (Nature) が世界の科学者を巻き込んだ議論を起こしました。",
+      "初心者: P=0.091 だと「効果なし」って結論しちゃいそうですが…",
+      "EBM先生: それが間違い。点推定が **20% 効果**で、95%CI が「-3% 〜 +48%」だとしたら、「効果なし」とは到底言えない。**「効果あり」も「悪化」もあり得る不確実な状態**です。",
+      "初心者: じゃあ何と言うべきですか?",
+      "EBM先生: GRADE で推奨される姿勢は **「点推定では 20% 効果あり、稀に 3% 悪化〜48% 効果の可能性が残る」**と、CI の範囲全体を議論すること。Core GRADE 2 (Imprecision) ではこの考え方が中核となっています。",
+      "初心者: P 値だけ見ると見落とすんですね。",
+      "EBM先生: そう。**P 値は二項判断のための便宜的指標**。CI の幅と、それが MID (最小重要差) や効果なしをまたぐかが本質です。",
+    ].join("\n\n"),
+    citationIds: ["amrhein2019", "coreGRADE2", "gradeHandbook"],
   },
 };
 

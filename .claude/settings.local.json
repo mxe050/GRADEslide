@@ -56,7 +56,9 @@
       "Bash(curl -sIL \"https://grad-eslide.vercel.app/\" --max-time 30)",
       "Bash(mkdir -p web/public/images/slides-full)",
       "Bash(cp pptx_work/rendered_slides/*.jpg web/public/images/slides-full/)",
-      "Bash(node scripts/rewrite-intro.mjs)"
+      "Bash(node scripts/rewrite-intro.mjs)",
+      "Read(//f/マイドライブ/2016年works/AI/作成アプリ/GRADEbook_CoreGRADE/grade-handbook-japanese-v2/coreGRADE/**)",
+      "Read(//f/マイドライブ/2016年works/AI/作成アプリ/GRADEbook_CoreGRADE/grade-handbook-japanese-v2/coreGRADE/paper/**)"
     ]
   }
 }

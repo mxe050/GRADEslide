@@ -108,16 +108,19 @@ html, body {
   color: #fff;
 }
 
-/* In-page 16:9 stage (used in normal mode, on top of every slide).
-   - Container queries scale text to the stage size, so it stays readable
-     on a 360px-wide phone and a 1400px laptop alike.
-   - Background gradient and rounded border for visual richness. */
+/* In-page stage (used in normal mode, on top of every slide).
+   - On phones (<768px) the box is at least 16:9 but can grow vertically if
+     the content needs more room — no cutoff, no clipped text.
+   - On tablets/desktops (>=768px) the box is strictly 16:9, since there's
+     plenty of room for the content to fit.
+   - Container queries scale text to the stage width on every screen.
+   - Gradient background and rounded border for visual richness. */
 .reading-stage {
   width: 100%;
   max-width: 1280px;
-  aspect-ratio: 16 / 9;
+  /* Mobile-first: minimum 16:9-shaped, but grows if content overflows. */
+  min-height: calc(56.25vw);
   border-radius: 16px;
-  overflow: hidden;
   position: relative;
   container-type: inline-size;
   container-name: stage;
@@ -128,6 +131,14 @@ html, body {
   );
   border: 1px solid var(--card-border);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.18);
+}
+
+@media (min-width: 768px) {
+  .reading-stage {
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 /* Stage content sized via container query units (cqw / cqh).
