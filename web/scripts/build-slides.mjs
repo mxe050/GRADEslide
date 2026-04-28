@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Convert pptx_work/extracted_output/extracted.json (106 slides) into S1〜S106
-// slide entries, merge with existing N1〜N6 in public/data/slides.json, and copy
-// referenced images into public/images/slides/.
+// Build S1〜S106 slide entries from extracted.json into a rich, readable web
+// layout (card / table / imageCard / image) — NOT the rendered JPEG dump.
+// Intro slides (N*) come from public/data/slides.json (edited via
+// scripts/rewrite-intro.mjs).
 //
 // Run:  node scripts/build-slides.mjs   (from web/)
 
@@ -29,20 +30,19 @@ const PUBLIC_IMG_DIR = path.join(WEB_DIR, "public", "images", "slides");
 
 // ---------- helpers ----------
 
-function shapeText(sh) {
-  if (!sh.text_frame) return "";
-  return sh.text_frame.paragraphs
-    .map((p) => p.runs.map((r) => r.text || "").join(""))
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .join("\n");
-}
-
 function paragraphText(p) {
   return p.runs
     .map((r) => r.text || "")
     .join("")
     .trim();
+}
+
+function shapeText(sh) {
+  if (!sh.text_frame) return "";
+  return sh.text_frame.paragraphs
+    .map(paragraphText)
+    .filter(Boolean)
+    .join("\n");
 }
 
 function topPt(sh) {
@@ -75,23 +75,20 @@ function firstParagraph(sh) {
   return "";
 }
 
+function sanitizeText(t) {
+  if (!t) return t;
+  return t.replace(/　/g, " ").replace(/[\t ]+/g, " ").trim();
+}
+
 function cleanTitle(t) {
   if (!t) return "";
-  // Strip trailing version-edition noise (Japanese):
-  //   "...原則：追加情報第3版：Users‘ Guides..." → "...原則"
   let s = t.replace(/[：:]\s*(?:追加情報|参考)?第?\d+版.*$/, "");
-  // Strip trailing author citation that starts with "<Name>, <Initial>." pattern:
-  //   "システマティックレビューの定義Higgins, J. P. T.," → "システマティックレビューの定義"
   s = s.replace(/[A-Z][a-zA-Z]+,\s*[A-Z]\.\s*[A-Z]?\.?.*$/, "");
-  // Strip "et al" suffix
   s = s.replace(/\s+[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?\s+et\s+al\.?.*$/, "");
   return s.trim();
 }
 
 function pickTitle(textShapes) {
-  // textShapes already sorted by top.pt asc.
-  // For each candidate, compute "cleaned" first paragraph (citation suffix stripped)
-  // then score by length, font size, placeholder name, position.
   const candidates = textShapes.slice(0, 6);
   if (candidates.length === 0) return undefined;
 
@@ -119,13 +116,32 @@ function pickTitle(textShapes) {
     if (named) score += 6;
     if (looksCitation) score -= 10;
 
-    // Strong bonus for the topmost shape — most slides put title on top
     score -= i * 0.5;
-    return { sh, score, len, cleaned };
+    return { sh, score };
   });
 
   scored.sort((a, b) => b.score - a.score);
   return scored[0].sh;
+}
+
+function tableToVisual(table) {
+  if (!table || !table.cells || table.cells.length === 0) return null;
+  const rows = table.cells.map((row) =>
+    row.map((cell) => {
+      if (!cell.text_frame) return "";
+      return cell.text_frame.paragraphs
+        .map(paragraphText)
+        .filter(Boolean)
+        .join(" ");
+    })
+  );
+  if (rows.length === 0) return null;
+  const headers = rows[0];
+  const body = rows.slice(1);
+  while (body.length > 0 && body[body.length - 1].every((c) => !c.trim())) {
+    body.pop();
+  }
+  return { headers, rows: body };
 }
 
 function sectionFor(slideIdx) {
@@ -134,33 +150,36 @@ function sectionFor(slideIdx) {
   return "3. 推奨決定の深い考察";
 }
 
-function sanitizeText(t) {
-  if (!t) return t;
-  // collapse whitespace, drop control chars
-  return t.replace(/　/g, " ").replace(/[\t ]+/g, " ").trim();
+function imageRelPath(imageFile) {
+  const basename = path.basename(imageFile);
+  return `/images/slides/${basename}`;
 }
+
+// ---------- per-slide builder ----------
 
 function buildSlide(raw, introCount) {
   const slideIdx = raw.slide_index;
   const id = `S${slideIdx}`;
   const order = introCount + slideIdx;
 
-  // Collect shapes (still needed to derive title + narration text)
   const allShapes = (raw.shapes || []).slice();
   const textShapes = allShapes
     .filter((sh) => sh.text_frame && shapeText(sh))
     .sort((a, b) => topPt(a) - topPt(b) || leftPt(a) - leftPt(b));
+  const tableShapes = allShapes.filter((sh) => sh.table);
+  const imageShapes = allShapes.filter((sh) => sh.image_file);
 
   const titleShape = pickTitle(textShapes);
   let title = titleShape
     ? sanitizeText(cleanTitle(firstParagraph(titleShape)))
     : "";
   if (!title) title = `スライド ${slideIdx}`;
-  if (title.length > 40) title = title.slice(0, 38) + "…";
+  // Don't truncate title — let it wrap. Just trim very-long ones.
+  if (title.length > 80) title = title.slice(0, 78) + "…";
 
   const bodyShapes = textShapes.filter((s) => s !== titleShape);
 
-  // narration: join body paragraphs with blank lines (used in NarrationPanel)
+  // ---- narration: all body text joined with blank lines ----
   const narrationParts = [];
   for (const sh of bodyShapes) {
     const t = shapeText(sh);
@@ -168,19 +187,88 @@ function buildSlide(raw, introCount) {
   }
   const narration =
     narrationParts.join("\n\n") ||
-    `*このスライドの解説テキストは原 PowerPoint から自動抽出されたものです。*`;
+    `*このスライドの解説テキストは原 PowerPoint から自動抽出されています。*`;
 
-  // Visual: always use the rendered full slide image (1600×900 JPEG exported
-  // from the original sample.pptx). The image already contains the title and
-  // every visual element, so we don't render a separate title above it.
-  const padded = String(slideIdx).padStart(3, "0");
-  const visual = {
-    type: "slideImage",
-    data: {
-      src: `/images/slides-full/slide${padded}.jpg`,
-      alt: title,
-    },
-  };
+  // ---- decide visual ----
+  let visual;
+
+  // 1. Table-driven slide → big table visual
+  if (tableShapes.length > 0) {
+    const t = tableToVisual(tableShapes[0].table);
+    if (t && t.headers.length > 0 && t.rows.length > 0) {
+      visual = {
+        type: "table",
+        data: { headers: t.headers, rows: t.rows },
+      };
+    }
+  }
+
+  // 2. Single big image with body text → imageCard
+  if (!visual && imageShapes.length === 1 && bodyShapes.length > 0) {
+    const bullets = bodyShapes
+      .flatMap((sh) =>
+        sh.text_frame.paragraphs.map(paragraphText).filter(Boolean)
+      )
+      .map(sanitizeText)
+      .filter((t) => t)
+      .slice(0, 8);
+    if (bullets.length > 0) {
+      visual = {
+        type: "imageCard",
+        data: {
+          heading: title,
+          image: {
+            src: imageRelPath(imageShapes[0].image_file),
+            alt: title,
+          },
+          bullets,
+        },
+      };
+    }
+  }
+
+  // 3. Image only (no body text) → image
+  if (!visual && imageShapes.length >= 1 && bodyShapes.length === 0) {
+    visual = {
+      type: "image",
+      data: {
+        src: imageRelPath(imageShapes[0].image_file),
+        alt: title,
+        caption: title,
+      },
+    };
+  }
+
+  // 4. Text only → card
+  if (!visual) {
+    const allParas = bodyShapes
+      .flatMap((sh) =>
+        sh.text_frame.paragraphs.map(paragraphText).filter(Boolean)
+      )
+      .map(sanitizeText)
+      .filter(Boolean);
+
+    if (allParas.length === 0) {
+      visual = {
+        type: "card",
+        data: {
+          heading: title,
+          body: "（このスライドには解説テキストが含まれていません。）",
+        },
+      };
+    } else if (allParas.length === 1 && allParas[0].length > 60) {
+      // single long paragraph → quote-style body
+      visual = {
+        type: "card",
+        data: { heading: title, body: allParas[0] },
+      };
+    } else {
+      visual = {
+        type: "card",
+        data: { heading: title, bullets: allParas },
+      };
+    }
+  }
 
   return {
     id,
@@ -192,10 +280,7 @@ function buildSlide(raw, introCount) {
   };
 }
 
-// ---------- revised overrides (from spec 5.2 / 5.3) ----------
-// These preserve auto-generated narration's section/order but replace the
-// visual + title + narration with manually curated content where the spec
-// provides it.
+// ---------- revised overrides (curated content) ----------
 
 const REVISED_OVERRIDES = {
   S6: {
@@ -232,8 +317,6 @@ const REVISED_OVERRIDES = {
     },
     narration:
       "EBMの3つの基本原則。これは Users' Guides to the Medical Literature 第3版（2015）に明記されているものです。\n\n特に3つ目の「エビデンスだけでは十分ではない」が重要です。患者の価値観、コスト、実行可能性まで考えなければ、本当の臨床決断はできません。",
-    speakerNotes:
-      "AI を使ったハルシネーションがある検索より、PubMed で SR を直接検索する方が確実、という補足が原スライドにある",
     citationIds: ["usersGuides2015"],
   },
   S25: {
@@ -248,11 +331,7 @@ const REVISED_OVERRIDES = {
             "limitation, risk of bias",
             "そのアウトカムの結果を構成する論文にバイアスが多く存在していたら",
           ],
-          [
-            "非一貫性 (inconsistency)",
-            "inconsistency",
-            "論文間で結果が異なっていれば",
-          ],
+          ["非一貫性 (inconsistency)", "inconsistency", "論文間で結果が異なっていれば"],
           [
             "非直接性 (indirectness)",
             "indirectness",
@@ -285,7 +364,7 @@ const REVISED_OVERRIDES = {
       },
     },
     narration:
-      "これが現在世界的に使われている診療ガイドラインの定義です。「ふーん、そうなんだ」ではなく、「なるほど、だからそうなのか」と理解できるように、ここまで一緒に考えてきました。\n\nキーワードは「システマティックレビュー」「利益と害の評価」「患者ケアの最適化」「推奨」。これらすべてに、必然的な理由があります。",
+      "これが現在世界的に使われている診療ガイドラインの定義です。「ふーん、そうなんだ」ではなく、「なるほど、だからそうなのか」と理解できるように、ここまで一緒に考えてきました。",
     warnings: ["この定義に従っていないものは「信頼できない診療ガイドライン」となる"],
     citationIds: ["iom2011"],
   },
@@ -316,17 +395,13 @@ const REVISED_OVERRIDES = {
             "間接的なエビデンスを結びつける明確な根拠が文書化されているか",
             "推論の根拠が示されている",
           ],
-          [
-            "5",
-            "声明は明確で実行可能か",
-            "何を・どこで・誰がするかが明示されている",
-          ],
+          ["5", "声明は明確で実行可能か", "何を・どこで・誰がするかが明示されている"],
         ],
         caption: "GPSは5要件すべてを満たす必要がある",
       },
     },
     narration:
-      "Good Practice Statement、略してGPSは、エビデンスの確実性や推奨の強さの正式評価には適さないが、明確に必要な行動を示す声明です。\n\n発行するには、ここに示す5要件をすべて満たす必要があります。逆に言えば、信頼できるエビデンスベースのガイドラインなら、非公式な推奨は完全に避けられるはずです。",
+      "Good Practice Statement、略してGPSは、エビデンスの確実性や推奨の強さの正式評価には適さないが、明確に必要な行動を示す声明です。",
   },
   S99: {
     title: "「有意差なし」≠「差がない」",
@@ -347,14 +422,12 @@ const REVISED_OVERRIDES = {
       },
     },
     narration:
-      "P値至上主義からの脱却が、近年の重要なテーマです。「有意差がない」ことは「差がない」ことを意味しません。\n\n帰無仮説を棄却できなくても、治療がアウトカムに影響しないとは言えない。点推定値と95%信頼区間の幅を見て、臨床的に意味のある効果があり得るかを議論する — これがGRADEで推奨される姿勢です。",
+      "P値至上主義からの脱却が、近年の重要なテーマです。「有意差がない」ことは「差がない」ことを意味しません。",
     citationIds: ["amrhein2019"],
   },
 };
 
-// Title-only overrides — body / narration / visual are kept from auto-extraction.
-// Use when the original PPTX has no clear title placeholder and the auto
-// heuristic produced a truncated body sentence as the title.
+// Title-only overrides
 const TITLE_OVERRIDES = {
   S12: "X薬のがん治療：4論文の縦読み（仮想例）",
   S15: "縦読みの実例（網羅的検索版）",
@@ -379,18 +452,7 @@ const TITLE_OVERRIDES = {
 
 function applyOverride(slide) {
   const ov = REVISED_OVERRIDES[slide.id];
-  if (ov) {
-    // The slide *image* is the visual — don't replace it with curated visuals
-    // even if the override defines them. We still pull the curated narration,
-    // title, citations, warnings, and speaker notes.
-    const merged = { ...slide };
-    if (ov.title) merged.title = ov.title;
-    if (ov.narration) merged.narration = ov.narration;
-    if (ov.citationIds) merged.citationIds = ov.citationIds;
-    if (ov.warnings) merged.warnings = ov.warnings;
-    if (ov.speakerNotes) merged.speakerNotes = ov.speakerNotes;
-    return merged;
-  }
+  if (ov) return { ...slide, ...ov };
   const t = TITLE_OVERRIDES[slide.id];
   if (t) return { ...slide, title: t };
   return slide;
@@ -402,9 +464,14 @@ function collectReferencedImages(slides) {
   const refs = new Set();
   for (const s of slides) {
     const v = s.visual;
+    if (!v) continue;
     if (v.type === "image") refs.add(path.basename(v.data.src));
     if (v.type === "imageCard") refs.add(path.basename(v.data.image.src));
     if (v.type === "imageComparison") {
+      refs.add(path.basename(v.data.leftImage.src));
+      refs.add(path.basename(v.data.rightImage.src));
+    }
+    if (v.type === "imagePair") {
       refs.add(path.basename(v.data.leftImage.src));
       refs.add(path.basename(v.data.rightImage.src));
     }
@@ -436,7 +503,7 @@ function main() {
   const extracted = JSON.parse(fs.readFileSync(EXTRACTED_JSON, "utf8"));
   const existing = JSON.parse(fs.readFileSync(SLIDES_JSON, "utf8"));
 
-  const introSlides = (existing.slides || []).filter((s) => /^N\d+$/.test(s.id));
+  const introSlides = (existing.slides || []).filter((s) => /^N/.test(s.id));
   const introCount = introSlides.length;
 
   const generated = extracted.slides
@@ -446,14 +513,20 @@ function main() {
 
   const merged = [...introSlides, ...generated];
 
-  // Update meta sections — drop "（準備中）"
   const meta = {
     ...existing.meta,
-    version: "0.2.0-step2",
     sections: [
       { id: "intro", title: "0. 導入：AI-EBM先生に学ぶ", startSlideId: "N1" },
-      { id: "definition", title: "1. 診療ガイドラインの定義を理解", startSlideId: "S1" },
-      { id: "creation", title: "2. 診療ガイドライン作成を学ぶ", startSlideId: "S41" },
+      {
+        id: "definition",
+        title: "1. 診療ガイドラインの定義を理解",
+        startSlideId: "S1",
+      },
+      {
+        id: "creation",
+        title: "2. 診療ガイドライン作成を学ぶ",
+        startSlideId: "S41",
+      },
       {
         id: "recommendation",
         title: "3. 推奨決定の深い考察",
@@ -468,13 +541,11 @@ function main() {
     slides: merged,
   };
 
-  // Copy images referenced by generated slides
-  const refs = collectReferencedImages(generated);
+  const refs = collectReferencedImages(merged);
   const copied = copyImages(refs);
 
   fs.writeFileSync(SLIDES_JSON, JSON.stringify(out, null, 2) + "\n", "utf8");
 
-  // Summary
   const counts = {};
   for (const s of generated) {
     counts[s.visual.type] = (counts[s.visual.type] || 0) + 1;
@@ -482,7 +553,7 @@ function main() {
   console.log(
     `Wrote ${merged.length} slides (intro=${introSlides.length}, generated=${generated.length})`
   );
-  console.log("Visual type counts:", counts);
+  console.log("Visual type counts (S only):", counts);
   console.log(`Images referenced: ${refs.size}, copied/updated: ${copied}`);
   console.log(`Output: ${SLIDES_JSON}`);
 }
