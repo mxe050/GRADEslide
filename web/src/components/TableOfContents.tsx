@@ -37,10 +37,10 @@ export function TableOfContents() {
       onClick={() => setTocOpen(false)}
     >
       <div
-        className="relative w-full md:max-w-2xl md:max-h-[85vh] bg-[var(--card)] md:rounded-2xl border-t md:border border-[var(--card-border)] shadow-2xl overflow-hidden flex flex-col mt-auto md:mt-0"
+        className="relative w-full md:max-w-2xl max-h-[85svh] md:max-h-[85vh] bg-[var(--card)] rounded-t-2xl md:rounded-2xl border-t md:border border-[var(--card-border)] shadow-2xl overflow-hidden flex flex-col mt-auto md:mt-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-[var(--card-border)]">
+        <header className="shrink-0 flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-[var(--card-border)]">
           <h2 className="text-lg font-semibold">目次</h2>
           <button
             type="button"
@@ -51,7 +51,13 @@ export function TableOfContents() {
             ✕
           </button>
         </header>
-        <div className="overflow-y-auto p-2 md:p-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 md:p-4"
+          style={{
+            WebkitOverflowScrolling: "touch",
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)",
+          }}
+        >
           {data.meta.sections.map((sec) => {
             const slidesInSec = allSlides.filter((s) => s.section === sec.title);
             const isPlaceholder = slidesInSec.length === 0;
@@ -99,7 +105,7 @@ export function TableOfContents() {
             );
           })}
         </div>
-        <footer className="px-4 md:px-6 py-3 border-t border-[var(--card-border)] text-xs text-[var(--muted)] flex justify-between">
+        <footer className="shrink-0 px-4 md:px-6 py-3 border-t border-[var(--card-border)] text-xs text-[var(--muted)] flex justify-between">
           <span>
             v{data.meta.version} · {allSlides.length} スライド
           </span>

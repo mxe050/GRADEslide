@@ -92,9 +92,11 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-.text-scale-sm { font-size: 15px; line-height: 1.65; }
-.text-scale-md { font-size: 16.5px; line-height: 1.7; }
-.text-scale-lg { font-size: 18.5px; line-height: 1.75; }
+/* Body font scale + a CSS variable that the stage picks up to scale its
+   container-query-based fonts in lockstep with the toggle. */
+.text-scale-sm { font-size: 15px; line-height: 1.65; --stage-scale: 0.88; }
+.text-scale-md { font-size: 16.5px; line-height: 1.7;  --stage-scale: 1; }
+.text-scale-lg { font-size: 18.5px; line-height: 1.75; --stage-scale: 1.18; }
 
 .present-stage {
   aspect-ratio: 16 / 9;
@@ -131,8 +133,11 @@ html, body {
   );
   border: 1px solid var(--card-border);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.18);
+  /* Default scale; .text-scale-* on an ancestor overrides via cascade. */
+  --stage-scale: 1;
 }
 
+/* Desktop: strict 16:9, no growing — the user explicitly asked for this. */
 @media (min-width: 768px) {
   .reading-stage {
     aspect-ratio: 16 / 9;
@@ -141,30 +146,32 @@ html, body {
   }
 }
 
-/* Stage content sized via container query units (cqw / cqh).
+/* Stage content sized via container query units (cqw) × --stage-scale.
    1cqw = 1% of stage width; on a 360px stage 4cqw = 14.4px — readable;
-   on a 1280px stage 4cqw = 51.2px — properly heading-sized. */
+   on a 1280px stage 4cqw = 51.2px — properly heading-sized. The
+   multiplier --stage-scale (set by .text-scale-sm/md/lg) lets the user
+   shrink or grow stage text via the A大中小 toggle on every device. */
 .reading-stage .stage-title {
-  font-size: clamp(0.95rem, 3.6cqw, 2.6rem);
+  font-size: calc(clamp(0.95rem, 3.6cqw, 2.6rem) * var(--stage-scale));
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 .reading-stage .stage-heading {
-  font-size: clamp(0.85rem, 3.0cqw, 2rem);
+  font-size: calc(clamp(0.85rem, 3.0cqw, 2rem) * var(--stage-scale));
   line-height: 1.25;
   font-weight: 700;
 }
 .reading-stage .stage-body {
-  font-size: clamp(0.75rem, 2.4cqw, 1.4rem);
+  font-size: calc(clamp(0.75rem, 2.4cqw, 1.4rem) * var(--stage-scale));
   line-height: 1.55;
 }
 .reading-stage .stage-bullet {
-  font-size: clamp(0.75rem, 2.4cqw, 1.4rem);
+  font-size: calc(clamp(0.75rem, 2.4cqw, 1.4rem) * var(--stage-scale));
   line-height: 1.5;
 }
 .reading-stage .stage-table {
-  font-size: clamp(0.7rem, 2.1cqw, 1.2rem);
+  font-size: calc(clamp(0.7rem, 2.1cqw, 1.2rem) * var(--stage-scale));
   line-height: 1.4;
 }
 .reading-stage .stage-table th,
@@ -172,11 +179,11 @@ html, body {
   padding: clamp(0.3rem, 1.2cqw, 0.9rem);
 }
 .reading-stage .stage-quote {
-  font-size: clamp(0.85rem, 2.8cqw, 1.7rem);
+  font-size: calc(clamp(0.85rem, 2.8cqw, 1.7rem) * var(--stage-scale));
   line-height: 1.5;
 }
 .reading-stage .stage-caption {
-  font-size: clamp(0.65rem, 1.7cqw, 0.95rem);
+  font-size: calc(clamp(0.65rem, 1.7cqw, 0.95rem) * var(--stage-scale));
   line-height: 1.4;
 }
 /* Inner padding scales with stage size too */
