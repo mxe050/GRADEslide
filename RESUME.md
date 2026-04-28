@@ -1,4 +1,33 @@
-# 作業再開メモ (Step 4 = ビジュアル大改造 完了時点)
+# 作業再開メモ
+
+## Step 9 (Guyatt 先生モノローグ + スマホ最適化, 2026-04-29)
+
+- **作業フォルダを `C:\Users\yuasa\Desktop\GRADEslide` に移動** (Drive 同期負荷で
+  Windows がフリーズする問題への対策)。Drive 配下のフォルダはバックアップ。
+- **フォントサイズ A大/中/小 のバグ修正**: `.reading-stage` が自身に
+  `--stage-scale: 1` を上書きしていたため、親要素 `.text-scale-*` が無効化されて
+  いた → 削除して継承させた。NavBar も A小/中/大の 3 ボタン分離に変更。
+- **配色・タイポを「学術大会で見やすい」基準に再設計**: globals.css 全面書き換え。
+  原 PowerPoint の濃紺ヘッダーバンドを再現する `.stage-section-band` を追加、
+  cqw + clamp() ベースのタイポは scale 変数で大中小を反映。
+- **解説欄の会話形式を完全に廃止**: NarrationPanel から `parseDialogue` を削除し、
+  Markdown を地の文として表示。
+- **131 スライド全ての narration を speak.txt 講演をベースに書き直し**:
+  - イントロ N1〜N4 を 「**ガイアット先生(架空の教育キャラ)が S1 へ繋ぐ短い前置き**」 に圧縮、
+    N5〜N25 はオプション章扱いに narration を簡素化。
+  - S1〜S40 (第1部 定義): EBM/SR/メタ分析/シンプソン/フォレストプロット/5要因 を speak.txt に従って解説。
+  - S41〜S76 (第2部 作成): パネル構成/COI/PICO/アウトカム選定/推奨の方向と強さ。
+  - S77〜S106 (第3部 推奨): EtD/SoF/MID/絶対効果/アウトカム重み付け定量化。
+- **citations を 35 件に拡張**: Core GRADE 0〜7 全巻、Lima/Guyatt 2023、
+  Schünemann 2016 EtD、Guyatt 2025 講演・QA、ROBINS-I、RoB 2、PRISMA 2020、
+  Cochrane Handbook、IOM Trustworthy 2011、WHO Statement Taxonomy 等。
+- **Drive 同期負荷の追加対策**:
+  - `next.config.ts` で webpack の watchOptions に `node_modules`/`.next`/`.git` を ignore。
+  - dev script を `cross-env NEXT_TELEMETRY_DISABLED=1 next dev` に変更してテレメトリの
+    ネットワーク往復を停止。
+  - `next build` は今後デフォルトでは実行しない方針(`npm run typecheck` で代替)。
+- 旧 `web/.next/` (304MB / 1373 ファイル) を削除済み。
+- 新規スクリプト: `web/scripts/rewrite-narrations.mjs`(再実行可能)。
 
 ## Step 4 (ビジュアル大改造)
 - `pptx_work/sample.pptx` を PowerPoint COM (PowerShell) で 1600×900 JPEG に

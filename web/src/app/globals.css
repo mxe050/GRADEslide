@@ -1,70 +1,117 @@
 @import "tailwindcss";
 
+/* =========================================================================
+   Color tokens — academic medical look (深い青を主軸 + 柔らかい背景)
+   ========================================================================= */
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --primary: #0369a1;
-  --primary-hover: #0284c7;
+  --background: #f5f7fb;
+  --foreground: #0b1830;
+  --primary: #1d4ed8;          /* indigo/blue 700 */
+  --primary-hover: #1e40af;
+  --primary-soft: #dbeafe;     /* primary 100 */
   --accent: #b45309;
   --good: #15803d;
-  --muted: #64748b;
+  --good-soft: #dcfce7;
+  --bad: #b91c1c;
+  --bad-soft: #fee2e2;
+  --muted: #475569;
+  --muted-soft: #94a3b8;
   --card: #ffffff;
-  --card-border: #e2e8f0;
-  --quote-border: #0ea5e9;
+  --card-border: #d8e0eb;
+  --card-strong-border: #b0bccc;
+  --quote-border: #1d4ed8;
   --warning-bg: #fef3c7;
   --warning-fg: #78350f;
   --warning-border: #f59e0b;
+  --slide-title-fg: #1e3a8a;   /* indigo 900 */
+  --slide-stage-bg-1: #f8fafc;
+  --slide-stage-bg-2: #eef4ff;
+  --slide-section-bg: #1e3a8a; /* dark blue band for section titles */
+  --slide-section-fg: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0b1220;
-    --foreground: #f1f5f9;
-    --primary: #38bdf8;
-    --primary-hover: #7dd3fc;
+    --background: #0a1326;
+    --foreground: #e8eef9;
+    --primary: #60a5fa;
+    --primary-hover: #93c5fd;
+    --primary-soft: #1e3a8a;
     --accent: #fbbf24;
     --good: #4ade80;
+    --good-soft: #14532d;
+    --bad: #f87171;
+    --bad-soft: #7f1d1d;
     --muted: #94a3b8;
-    --card: #111c2e;
-    --card-border: #1e293b;
-    --quote-border: #38bdf8;
+    --muted-soft: #64748b;
+    --card: #11203e;
+    --card-border: #1f3257;
+    --card-strong-border: #355088;
+    --quote-border: #60a5fa;
     --warning-bg: #2a1d05;
     --warning-fg: #fde68a;
     --warning-border: #b45309;
+    --slide-title-fg: #93c5fd;
+    --slide-stage-bg-1: #0f1d3a;
+    --slide-stage-bg-2: #112952;
+    --slide-section-bg: #0f1d3a;
+    --slide-section-fg: #e8eef9;
   }
 }
 
-/* Manual override (always wins over system preference) */
 :root[data-theme="dark"] {
-  --background: #0b1220;
-  --foreground: #f1f5f9;
-  --primary: #38bdf8;
-  --primary-hover: #7dd3fc;
+  --background: #0a1326;
+  --foreground: #e8eef9;
+  --primary: #60a5fa;
+  --primary-hover: #93c5fd;
+  --primary-soft: #1e3a8a;
   --accent: #fbbf24;
   --good: #4ade80;
+  --good-soft: #14532d;
+  --bad: #f87171;
+  --bad-soft: #7f1d1d;
   --muted: #94a3b8;
-  --card: #111c2e;
-  --card-border: #1e293b;
-  --quote-border: #38bdf8;
+  --muted-soft: #64748b;
+  --card: #11203e;
+  --card-border: #1f3257;
+  --card-strong-border: #355088;
+  --quote-border: #60a5fa;
   --warning-bg: #2a1d05;
   --warning-fg: #fde68a;
   --warning-border: #b45309;
+  --slide-title-fg: #93c5fd;
+  --slide-stage-bg-1: #0f1d3a;
+  --slide-stage-bg-2: #112952;
+  --slide-section-bg: #0f1d3a;
+  --slide-section-fg: #e8eef9;
 }
 
 :root[data-theme="light"] {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --primary: #0369a1;
-  --primary-hover: #0284c7;
+  --background: #f5f7fb;
+  --foreground: #0b1830;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-soft: #dbeafe;
   --accent: #b45309;
   --good: #15803d;
-  --muted: #64748b;
+  --good-soft: #dcfce7;
+  --bad: #b91c1c;
+  --bad-soft: #fee2e2;
+  --muted: #475569;
+  --muted-soft: #94a3b8;
   --card: #ffffff;
-  --card-border: #e2e8f0;
-  --quote-border: #0ea5e9;
+  --card-border: #d8e0eb;
+  --card-strong-border: #b0bccc;
+  --quote-border: #1d4ed8;
   --warning-bg: #fef3c7;
   --warning-fg: #78350f;
   --warning-border: #f59e0b;
+  --slide-title-fg: #1e3a8a;
+  --slide-stage-bg-1: #f8fafc;
+  --slide-stage-bg-2: #eef4ff;
+  --slide-section-bg: #1e3a8a;
+  --slide-section-fg: #ffffff;
 }
 
 @theme inline {
@@ -72,8 +119,12 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
   --color-accent: var(--accent);
   --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
   --color-muted: var(--muted);
   --color-card: var(--card);
   --color-card-border: var(--card-border);
@@ -90,19 +141,35 @@ html, body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "palt";
+  text-rendering: optimizeLegibility;
 }
 
-/* Body font scale + a CSS variable that the stage picks up to scale its
-   container-query-based fonts in lockstep with the toggle. */
-.text-scale-sm { font-size: 15px; line-height: 1.65; --stage-scale: 0.88; }
-.text-scale-md { font-size: 16.5px; line-height: 1.7;  --stage-scale: 1; }
-.text-scale-lg { font-size: 18.5px; line-height: 1.75; --stage-scale: 1.18; }
+/* =========================================================================
+   Font scale — drives BOTH the narration (body text) AND the stage content.
+   The user's A大中小 toggle on NavBar sets one of these classes on the
+   slide root, which:
+     1. resizes body text directly via font-size
+     2. exposes --stage-scale that the .reading-stage uses to scale its
+        container-query-driven typography
+   IMPORTANT: .reading-stage MUST NOT override --stage-scale (we set it on
+   ancestor only and let it inherit through).
+   ========================================================================= */
+.text-scale-sm { font-size: 14px;   line-height: 1.65; --stage-scale: 0.82; }
+.text-scale-md { font-size: 16.5px; line-height: 1.7;  --stage-scale: 1.00; }
+.text-scale-lg { font-size: 19.5px; line-height: 1.8;  --stage-scale: 1.30; }
 
+@media (min-width: 768px) {
+  .text-scale-sm { font-size: 15px; }
+  .text-scale-md { font-size: 17px; }
+  .text-scale-lg { font-size: 20px; }
+}
+
+/* =========================================================================
+   Present mode 16:9 stage
+   ========================================================================= */
 .present-stage {
   aspect-ratio: 16 / 9;
-  /* Fit the largest 16:9 box that fits both 100vw and 100svh.
-     Without this, on tall (portrait) viewports the width fills 100% and the
-     forced 16:9 height overflows the screen. */
   width: min(100%, calc(100svh * 16 / 9));
   max-width: 1600px;
   max-height: 100svh;
@@ -110,105 +177,183 @@ html, body {
   color: #fff;
 }
 
-/* In-page stage (used in normal mode, on top of every slide).
-   - On phones (<768px) the box is at least 16:9 but can grow vertically if
-     the content needs more room — no cutoff, no clipped text.
-   - On tablets/desktops (>=768px) the box is strictly 16:9, since there's
-     plenty of room for the content to fit.
-   - Container queries scale text to the stage width on every screen.
-   - Gradient background and rounded border for visual richness. */
+/* =========================================================================
+   Reading-mode stage — always-visible 16:9 box on top of normal pages
+     - Mobile: 16:9 minimum but allowed to grow vertically when content needs
+     - Desktop (>= 768px): strict 16:9 with overflow auto
+     - Container-query root so children can size with cqw
+     - DOES NOT reset --stage-scale (inherits from .text-scale-* ancestor)
+   ========================================================================= */
 .reading-stage {
   width: 100%;
   max-width: 1280px;
-  /* Mobile-first: minimum 16:9-shaped, but grows if content overflows. */
+  /* Mobile-first: minimum 16:9 shape, can grow when content overflows */
   min-height: calc(56.25vw);
-  border-radius: 16px;
+  border-radius: 18px;
   position: relative;
   container-type: inline-size;
   container-name: stage;
-  background: linear-gradient(
-    135deg,
-    color-mix(in oklab, var(--card) 92%, var(--primary) 8%) 0%,
-    var(--card) 70%
-  );
-  border: 1px solid var(--card-border);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -16px rgb(0 0 0 / 0.18);
-  /* Default scale; .text-scale-* on an ancestor overrides via cascade. */
-  --stage-scale: 1;
+  background:
+    linear-gradient(
+      135deg,
+      var(--slide-stage-bg-2) 0%,
+      var(--slide-stage-bg-1) 60%,
+      var(--card) 100%
+    );
+  border: 1px solid var(--card-strong-border);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 18px 48px -22px rgb(15 23 42 / 0.22);
+  overflow: hidden;
 }
 
-/* Desktop: strict 16:9, no growing — the user explicitly asked for this. */
 @media (min-width: 768px) {
   .reading-stage {
     aspect-ratio: 16 / 9;
     min-height: 0;
-    overflow: hidden;
   }
 }
 
-/* Stage content sized via container query units (cqw) × --stage-scale.
-   1cqw = 1% of stage width; on a 360px stage 4cqw = 14.4px — readable;
-   on a 1280px stage 4cqw = 51.2px — properly heading-sized. The
-   multiplier --stage-scale (set by .text-scale-sm/md/lg) lets the user
-   shrink or grow stage text via the A大中小 toggle on every device. */
+/* Container-query-based typography — readable from 360px to 1280px stage.
+   Multiplied by --stage-scale (set on ancestor by the A大中小 toggle).
+   Line heights and weights tuned for Japanese display. */
 .reading-stage .stage-title {
-  font-size: calc(clamp(0.95rem, 3.6cqw, 2.6rem) * var(--stage-scale));
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: calc(clamp(1.05rem, 4.0cqw, 2.7rem) * var(--stage-scale, 1));
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.005em;
+  color: var(--slide-title-fg);
 }
 .reading-stage .stage-heading {
-  font-size: calc(clamp(0.85rem, 3.0cqw, 2rem) * var(--stage-scale));
-  line-height: 1.25;
+  font-size: calc(clamp(0.92rem, 3.2cqw, 2.05rem) * var(--stage-scale, 1));
+  line-height: 1.3;
   font-weight: 700;
+  color: var(--primary);
 }
 .reading-stage .stage-body {
-  font-size: calc(clamp(0.75rem, 2.4cqw, 1.4rem) * var(--stage-scale));
-  line-height: 1.55;
+  font-size: calc(clamp(0.82rem, 2.6cqw, 1.45rem) * var(--stage-scale, 1));
+  line-height: 1.6;
 }
 .reading-stage .stage-bullet {
-  font-size: calc(clamp(0.75rem, 2.4cqw, 1.4rem) * var(--stage-scale));
-  line-height: 1.5;
+  font-size: calc(clamp(0.8rem, 2.55cqw, 1.4rem) * var(--stage-scale, 1));
+  line-height: 1.55;
 }
 .reading-stage .stage-table {
-  font-size: calc(clamp(0.7rem, 2.1cqw, 1.2rem) * var(--stage-scale));
-  line-height: 1.4;
+  font-size: calc(clamp(0.74rem, 2.25cqw, 1.2rem) * var(--stage-scale, 1));
+  line-height: 1.45;
 }
 .reading-stage .stage-table th,
 .reading-stage .stage-table td {
-  padding: clamp(0.3rem, 1.2cqw, 0.9rem);
+  padding: clamp(0.35rem, 1.3cqw, 0.95rem);
 }
 .reading-stage .stage-quote {
-  font-size: calc(clamp(0.85rem, 2.8cqw, 1.7rem) * var(--stage-scale));
-  line-height: 1.5;
+  font-size: calc(clamp(0.95rem, 3.0cqw, 1.85rem) * var(--stage-scale, 1));
+  line-height: 1.55;
+  font-weight: 500;
 }
 .reading-stage .stage-caption {
-  font-size: calc(clamp(0.65rem, 1.7cqw, 0.95rem) * var(--stage-scale));
+  font-size: calc(clamp(0.7rem, 1.85cqw, 1rem) * var(--stage-scale, 1));
+  line-height: 1.45;
+}
+.reading-stage .stage-inner {
+  padding: clamp(0.7rem, 2.6cqw, 1.6rem);
+}
+
+/* Present mode stage — same container-query rules, scale 1.0 forced larger */
+.present-stage .stage-title {
+  font-size: clamp(1.6rem, 5.5cqw, 4rem);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.005em;
+}
+.present-stage .stage-heading {
+  font-size: clamp(1.3rem, 4.2cqw, 3rem);
+  line-height: 1.25;
+  font-weight: 700;
+}
+.present-stage .stage-body {
+  font-size: clamp(1.1rem, 3.4cqw, 2.2rem);
+  line-height: 1.5;
+}
+.present-stage .stage-bullet {
+  font-size: clamp(1.1rem, 3.4cqw, 2.2rem);
+  line-height: 1.5;
+}
+.present-stage .stage-table {
+  font-size: clamp(0.95rem, 3cqw, 1.9rem);
   line-height: 1.4;
 }
-/* Inner padding scales with stage size too */
-.reading-stage .stage-inner {
-  padding: clamp(0.6rem, 2.4cqw, 1.5rem);
+.present-stage .stage-table th,
+.present-stage .stage-table td {
+  padding: clamp(0.45rem, 1.6cqw, 1.2rem);
+}
+.present-stage .stage-quote {
+  font-size: clamp(1.3rem, 4.2cqw, 2.8rem);
+  line-height: 1.4;
+  font-weight: 500;
+}
+.present-stage .stage-caption {
+  font-size: clamp(0.9rem, 2.4cqw, 1.5rem);
+  line-height: 1.4;
+}
+.present-stage .stage-inner {
+  padding: clamp(1rem, 3.5cqw, 2.5rem);
 }
 
-/* Present mode keeps its existing scaling (much larger fonts) */
+/* =========================================================================
+   Section title band (top of each slide stage when used)
+   ========================================================================= */
+.stage-section-band {
+  background: var(--slide-section-bg);
+  color: var(--slide-section-fg);
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5em;
+}
 
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
+/* =========================================================================
+   Markdown body (used inside narration / cells)
+   ========================================================================= */
 .markdown-body p { margin: 0.6em 0; }
 .markdown-body p:first-child { margin-top: 0; }
 .markdown-body p:last-child { margin-bottom: 0; }
-.markdown-body strong { color: var(--primary); font-weight: 700; }
-.markdown-body em { color: var(--muted); font-style: italic; }
+.markdown-body strong {
+  color: var(--primary);
+  font-weight: 700;
+  background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--primary) 18%, transparent) 60%);
+  padding: 0 0.05em;
+}
+.markdown-body em { color: var(--accent); font-style: normal; font-weight: 600; }
 .markdown-body code {
   background: var(--card-border);
   padding: 0.1em 0.35em;
   border-radius: 0.25rem;
-  font-size: 0.9em;
+  font-size: 0.92em;
 }
 
-.visual-bullet strong { color: var(--primary); font-weight: 700; }
+.visual-bullet strong {
+  color: var(--primary);
+  font-weight: 700;
+  background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--primary) 16%, transparent) 60%);
+  padding: 0 0.05em;
+}
+
+/* Slightly tighter narration bullets/tables on mobile */
+.narration-body { word-break: break-word; }
+.narration-body table { border-collapse: collapse; }
+.narration-body table th,
+.narration-body table td { border: 1px solid var(--card-border); padding: 0.4em 0.6em; }
+.narration-body table th { background: var(--primary-soft); color: var(--primary-hover); }
+
+/* =========================================================================
+   Misc utilities
+   ========================================================================= */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }

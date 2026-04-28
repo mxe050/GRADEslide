@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
+import clsx from "clsx";
 import { useUIStore } from "@/lib/store";
 import type { Slide } from "@/lib/types";
 import type { ThemeMode } from "@/lib/store";
@@ -125,17 +126,39 @@ function FontSizeToggle({
   current: "sm" | "md" | "lg";
   onChange: (s: "sm" | "md" | "lg") => void;
 }) {
-  const next = current === "sm" ? "md" : current === "md" ? "lg" : "sm";
-  const label = current === "sm" ? "小" : current === "md" ? "中" : "大";
+  const sizes: { v: "sm" | "md" | "lg"; label: string; scale: string }[] = [
+    { v: "sm", label: "小", scale: "text-[11px]" },
+    { v: "md", label: "中", scale: "text-[14px]" },
+    { v: "lg", label: "大", scale: "text-[18px]" },
+  ];
   return (
-    <button
-      type="button"
-      onClick={() => onChange(next)}
-      className="inline-flex items-center justify-center rounded-md w-9 h-9 text-sm font-medium hover:bg-[var(--card-border)]/60 transition-colors"
-      aria-label={`文字サイズ: 現在 ${label}。切り替え`}
-      title="文字サイズ"
+    <div
+      role="group"
+      aria-label="文字サイズ"
+      className="inline-flex items-center rounded-md border border-[var(--card-border)] overflow-hidden"
     >
-      A{label}
-    </button>
+      {sizes.map((s) => {
+        const isActive = current === s.v;
+        return (
+          <button
+            key={s.v}
+            type="button"
+            onClick={() => onChange(s.v)}
+            aria-pressed={isActive}
+            className={clsx(
+              "inline-flex items-center justify-center w-8 h-9 leading-none font-bold transition-colors",
+              s.scale,
+              isActive
+                ? "bg-[var(--primary)] text-white"
+                : "bg-transparent text-[var(--foreground)] hover:bg-[var(--card-border)]/60"
+            )}
+            title={`文字サイズ: ${s.label}`}
+            aria-label={`文字サイズ${s.label}`}
+          >
+            A{s.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

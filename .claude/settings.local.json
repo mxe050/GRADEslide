@@ -58,7 +58,13 @@
       "Bash(cp pptx_work/rendered_slides/*.jpg web/public/images/slides-full/)",
       "Bash(node scripts/rewrite-intro.mjs)",
       "Read(//f/マイドライブ/2016年works/AI/作成アプリ/GRADEbook_CoreGRADE/grade-handbook-japanese-v2/coreGRADE/**)",
-      "Read(//f/マイドライブ/2016年works/AI/作成アプリ/GRADEbook_CoreGRADE/grade-handbook-japanese-v2/coreGRADE/paper/**)"
+      "Read(//f/マイドライブ/2016年works/AI/作成アプリ/GRADEbook_CoreGRADE/grade-handbook-japanese-v2/coreGRADE/paper/**)",
+      "Bash(cmd /c \"npm run build 2>&1\")",
+      "Bash(cmd /c \"npx tsc --noEmit 2>&1\")",
+      "Bash(node scripts/rewrite-narrations.mjs)",
+      "Bash(cmd /c \"npx tsc --noEmit\")",
+      "Bash(cmd /c \"npx tsc --noEmit > tscheck.log 2>&1 ; type tscheck.log\")",
+      "PowerShell($env:NO_COLOR='1'; npx tsc --noEmit 2>&1 | Out-String)"
     ]
   }
 }
