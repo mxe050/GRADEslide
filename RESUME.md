@@ -1,5 +1,89 @@
 # 作業再開メモ
 
+## Steps 10〜21 (G先生リネーム + 全面リッチ化, 2026-04-29)
+
+### Step 10: G先生リネーム + イントロ刷新
+- 「Guyatt先生 / ガイアット先生」 → **「G先生」**に全置換 (実在人物参照は
+  「Gordon Guyatt 教授」/引用は「Guyatt GH」 のまま)
+- イントロ N1〜N22 を **A薬講演の批判的吟味会話** で刷新 (座長/発表者/G先生)
+- 4 タイプ × 4 スライド構成 (基礎研究 → RCT → SR/MA → CPG)
+
+### Step 11: UI/UX 改善
+- **マークダウン太字 (`strong`) の青下線除去**: linear-gradient 背景を撤去、青文字のみに
+- **目次セクション**: 「0. 導入：AI-EBM先生に学ぶ」 → 「**0. 導入：G先生に学ぶ**」
+  (intro slides の section と一致させて「Step 2 以降で追加予定」 プレースホルダー解消)
+- **「本日のメニュー」 重複** (S2/S3) を統合 (S3 削除)
+- **S31 テーブル**を slide031.jpg に完全一致するように修正 (3行×4列)
+- **S12〜S29 + S34/35** を `slideImage` に変換 (元 PPT レンダリング画像を採用)
+- **モバイルナビフッター固定**: `sticky` → `fixed inset-x-0 bottom-0` でアドレスバー
+  伸縮による「ふにゃふにゃ」 を解消
+
+### Step 12 (Phase 1): CSS 配色拡張 + プレースホルダー一掃
+- **新カラー**: `critical` (赤) / `info` (青系) / `highlight` (橙) を light/dark 両テーマに追加
+- `.markdown-body em` を accent=赤系に: `**bold(青)**` + `*em(赤)*` のメリハリ
+- `.stage-callout--{critical,warning,good,info,highlight}` 5 系統の枠付きボックス追加
+- markdown 内 `<mark>` を赤マーカー装飾
+- `CardVisual.accent` に "critical" / "info" / "highlight" を追加
+- 「（このスライドには解説テキストが含まれていません…）」 プレースホルダー 14 枚 +
+  S93 (S92 と完全重複だった card) — 計 15 枚を、元 PPT のレンダリング画像
+  (`/images/slides-full/slideNNN.jpg`) に差し替え (slideImage 型)
+- 全 106 枚の rendered_slides をリポジトリ同梱
+
+### Steps 13〜18 (Phase 2-3): 重複統合と narration 整流
+- **Step 13**: 重複スライド統合 — S43 削除 (S38 に narration 統合)、
+  S40 リタイトル、S58/S59 を slideImage 化、S96/S97 副題で差別化
+- **Step 14**: S46 を 4 役割の 2 列テーブル化、S37/S80/S104/S106 を slideImage 化、
+  S4=warning, S5=info の accent 適用
+- **Step 15**: セクション 2 の card 23 枚 (S42, S44, S47-S57, S60-S62, S65, S74-S76, S78,
+  S81, S88) を slideImage に一括変換 (text-heavy で原 PPT に意味あるレイアウト)
+- **Step 16**: S42〜S57 narration の **off-by-one 整流** (各スライドで
+  本文(画像)と解説のトピックが 1 つずれていた問題を解消)
+- **Step 17**: S60〜S76 narration を再配置 (元 PPT 画像参照で hallucination なし)
+- **Step 18**: 残カード 8 枚に accent 配色 (S7/S9/S10/S36=info、S30/S39=warning、
+  S32=good、S40=critical) + S80 narration 整流
+
+### Step 19 (Phase 4-1): モバイル可読性 — slideImage タップ拡大
+- `SlideImageR` に zoomable オプション追加。タップで全画面 z-60 モーダルが開き、
+  画像を 100vw + 自然比で表示 (Esc / ✕ / 背景タップで閉じる)
+- 64 枚の slideImage 全部に適用 → スマホでも PPT の細かい本文を精読可能に
+
+### Step 20 (Phase 2-5): セクション 3 の off-by-3 整流
+- S82-S87 ではナレーションがスライドのトピックから 3 つ後の内容を解説していた
+  (例: S82 タイトル「具体例」 ← narration「Remarks の話」)
+- S82/S83/S84 を元 PPT 画像 (slide082-084.jpg) ベースで書き起こし、旧 narration を
+  S85/S86/S87/S88/S90 へ移動して整列
+
+### Step 21: 最終ポリッシュ
+- N3 (G先生とは) に `accent=info` 適用
+
+### 現在の構成 (v0.16.0)
+- **総スライド数**: 126 (元 131 → S2/S3 統合で -1、S43 統合で -1、観察研究セクション削除で -3)
+- **イントロ N1〜N22**: 22 枚 (4 タイプ × 4 + 冒頭 3 + 締め 3)
+- **第1部 S1〜S40**: 39 枚 (S3 削除により)
+- **第2部 S41〜S76**: 35 枚 (S43 削除により)
+- **第3部 S77〜S106**: 30 枚
+
+### Visual type 内訳
+- slideImage: 64 (元 PPT 画像、タップで拡大可能)
+- card: 18 (うち 8 枚に accent 配色)
+- table: 15
+- image: 11
+- imageCard: 9
+- comparison: 4
+- list: 3
+- quote: 2
+
+### Migration スクリプト (再現性のため残置)
+- `scripts/step11-restructure.mjs`
+- `scripts/step12-fix-placeholders.mjs`
+- `scripts/step13-merge-dups.mjs`
+- `scripts/step14-rich-styling.mjs`
+- `scripts/step15-bulk-slideimage.mjs`
+- `scripts/step16-realign-narrations-s42-s57.mjs`
+- `scripts/step17-realign-narrations-s60-s76.mjs`
+- `scripts/step18-rich-accents.mjs`
+- `scripts/step20-realign-section3.mjs`
+
 ## Step 9 (Guyatt 先生モノローグ + スマホ最適化, 2026-04-29)
 
 - **作業フォルダを `C:\Users\yuasa\Desktop\GRADEslide` に移動** (Drive 同期負荷で
