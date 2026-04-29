@@ -178,7 +178,7 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
         <motion.main
           key={slide.id}
           {...slideTransition}
-          className="flex-1 flex flex-col gap-4 md:gap-6 px-3 md:px-6 py-3 md:py-5 max-w-[1400px] mx-auto w-full"
+          className="flex-1 flex flex-col gap-4 md:gap-6 px-3 md:px-6 py-3 md:py-5 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] max-w-[1400px] mx-auto w-full"
         >
           {/* 16:9 stage on top — visible on every device. Container queries
               inside VisualPanel make the typography scale to fit the box, so

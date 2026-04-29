@@ -14,7 +14,7 @@ export function NavFooter({ prevId, nextId, index, total }: Props) {
   const router = useRouter();
   return (
     <footer
-      className="sticky bottom-0 z-20 border-t border-[var(--card-border)] bg-[var(--background)]/95 backdrop-blur-md"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--card-border)] bg-[var(--background)]/95 backdrop-blur-md"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {/*
