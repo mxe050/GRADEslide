@@ -17,7 +17,7 @@ export function NarrationPanel({ slide }: Props) {
     <div className="fade-in flex flex-col gap-4 md:gap-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] p-5 md:p-7 shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
-          解説（ガイアット先生より）
+          解説（G先生より）
         </h3>
         <span className="text-[10px] md:text-xs text-[var(--muted-soft)] font-medium">
           {slide.id}
