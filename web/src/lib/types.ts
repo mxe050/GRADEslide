@@ -13,7 +13,7 @@ export interface CardVisual {
     heading?: string;
     bullets?: string[];
     body?: string;
-    accent?: "default" | "warning" | "good";
+    accent?: "default" | "warning" | "good" | "critical" | "info" | "highlight";
   };
 }
 

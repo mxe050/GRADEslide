@@ -129,6 +129,12 @@ function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean 
       ? "border-l-[6px] border-[var(--warning-border)] bg-[var(--warning-bg)]/60 pl-3"
       : data.accent === "good"
       ? "border-l-[6px] border-[var(--good)] bg-[var(--good-soft)]/40 pl-3"
+      : data.accent === "critical"
+      ? "border-l-[6px] border-[var(--critical-border)] bg-[var(--critical-soft)]/50 pl-3"
+      : data.accent === "info"
+      ? "border-l-[6px] border-[var(--info-border)] bg-[var(--info-soft)]/50 pl-3"
+      : data.accent === "highlight"
+      ? "border-l-[6px] border-[var(--highlight-border)] bg-[var(--highlight-soft)]/50 pl-3"
       : "";
   return (
     <div

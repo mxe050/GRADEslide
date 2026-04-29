@@ -10,7 +10,17 @@
   --primary: #1d4ed8;          /* indigo/blue 700 */
   --primary-hover: #1e40af;
   --primary-soft: #dbeafe;     /* primary 100 */
-  --accent: #b45309;
+  --accent: #dc2626;
+  --accent-soft: #fee2e2;
+  --critical: #dc2626;
+  --critical-soft: #fee2e2;
+  --critical-border: #ef4444;
+  --info: #0369a1;
+  --info-soft: #e0f2fe;
+  --info-border: #38bdf8;
+  --highlight: #c2410c;
+  --highlight-soft: #ffedd5;
+  --highlight-border: #fb923c;
   --good: #15803d;
   --good-soft: #dcfce7;
   --bad: #b91c1c;
@@ -38,7 +48,17 @@
     --primary: #60a5fa;
     --primary-hover: #93c5fd;
     --primary-soft: #1e3a8a;
-    --accent: #fbbf24;
+    --accent: #f87171;
+  --accent-soft: #7f1d1d;
+  --critical: #f87171;
+  --critical-soft: #7f1d1d;
+  --critical-border: #ef4444;
+  --info: #38bdf8;
+  --info-soft: #082f49;
+  --info-border: #0ea5e9;
+  --highlight: #fb923c;
+  --highlight-soft: #431407;
+  --highlight-border: #f97316;
     --good: #4ade80;
     --good-soft: #14532d;
     --bad: #f87171;
@@ -66,7 +86,17 @@
   --primary: #60a5fa;
   --primary-hover: #93c5fd;
   --primary-soft: #1e3a8a;
-  --accent: #fbbf24;
+  --accent: #f87171;
+  --accent-soft: #7f1d1d;
+  --critical: #f87171;
+  --critical-soft: #7f1d1d;
+  --critical-border: #ef4444;
+  --info: #38bdf8;
+  --info-soft: #082f49;
+  --info-border: #0ea5e9;
+  --highlight: #fb923c;
+  --highlight-soft: #431407;
+  --highlight-border: #f97316;
   --good: #4ade80;
   --good-soft: #14532d;
   --bad: #f87171;
@@ -93,7 +123,17 @@
   --primary: #1d4ed8;
   --primary-hover: #1e40af;
   --primary-soft: #dbeafe;
-  --accent: #b45309;
+  --accent: #dc2626;
+  --accent-soft: #fee2e2;
+  --critical: #dc2626;
+  --critical-soft: #fee2e2;
+  --critical-border: #ef4444;
+  --info: #0369a1;
+  --info-soft: #e0f2fe;
+  --info-border: #38bdf8;
+  --highlight: #c2410c;
+  --highlight-soft: #ffedd5;
+  --highlight-border: #fb923c;
   --good: #15803d;
   --good-soft: #dcfce7;
   --bad: #b91c1c;
@@ -313,6 +353,52 @@ html, body {
   font-weight: 700;
   letter-spacing: 0.04em;
   margin-bottom: 0.5em;
+}
+
+/* =========================================================================
+   Callout boxes — for highlighting key points inside slides.
+   Used by CardR via accent="critical|warning|good|info|highlight".
+   ========================================================================= */
+.stage-callout {
+  border-radius: 12px;
+  padding: 0.8em 1em;
+  margin: 0.4em 0;
+  border-left: 6px solid;
+}
+.stage-callout--critical {
+  background: color-mix(in srgb, var(--critical-soft) 60%, transparent);
+  border-left-color: var(--critical-border);
+  color: var(--critical);
+}
+.stage-callout--warning {
+  background: color-mix(in srgb, var(--warning-bg) 60%, transparent);
+  border-left-color: var(--warning-border);
+  color: var(--warning-fg);
+}
+.stage-callout--good {
+  background: color-mix(in srgb, var(--good-soft) 50%, transparent);
+  border-left-color: var(--good);
+  color: var(--good);
+}
+.stage-callout--info {
+  background: color-mix(in srgb, var(--info-soft) 60%, transparent);
+  border-left-color: var(--info-border);
+  color: var(--info);
+}
+.stage-callout--highlight {
+  background: color-mix(in srgb, var(--highlight-soft) 60%, transparent);
+  border-left-color: var(--highlight-border);
+  color: var(--highlight);
+}
+
+/* Inline emphasis marker (for narration `==text==` via <mark>) */
+.markdown-body mark,
+.narration-body mark {
+  background: color-mix(in srgb, var(--critical-soft) 70%, transparent);
+  color: var(--critical);
+  padding: 0 0.2em;
+  border-radius: 0.2em;
+  font-weight: 700;
 }
 
 /* =========================================================================
