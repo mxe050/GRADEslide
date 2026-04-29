@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import type {
@@ -38,7 +39,7 @@ export function VisualPanel({ slide, present }: Props) {
           present ? "" : "rounded-2xl overflow-hidden bg-black"
         )}
       >
-        <SlideImageR data={slide.visual.data} present={present} />
+        <SlideImageR data={slide.visual.data} present={present} zoomable={!present} />
       </div>
     );
   }
@@ -103,11 +104,28 @@ function Renderer({ slide, present }: Props) {
 function SlideImageR({
   data,
   present,
+  zoomable,
 }: {
   data: SlideImageVisual["data"];
   present?: boolean;
+  zoomable?: boolean;
 }) {
-  return (
+  const [zoomed, setZoomed] = useState(false);
+
+  useEffect(() => {
+    if (!zoomed) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setZoomed(false);
+    }
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [zoomed]);
+
+  const img = (
     <Image
       src={data.src}
       alt={data.alt}
@@ -120,6 +138,55 @@ function SlideImageR({
       )}
       priority
     />
+  );
+
+  if (!zoomable) return img;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setZoomed(true)}
+        className="relative group cursor-zoom-in w-full h-full flex items-center justify-center"
+        aria-label="スライド画像を拡大表示"
+      >
+        {img}
+        <span className="pointer-events-none absolute right-2 bottom-2 text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-white/85 text-[var(--foreground)] border border-[var(--card-border)] opacity-80 group-hover:opacity-100 transition">
+          🔍 タップで拡大
+        </span>
+      </button>
+      {zoomed && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center p-2"
+          role="dialog"
+          aria-modal="true"
+          aria-label="スライド拡大表示"
+          onClick={() => setZoomed(false)}
+        >
+          <Image
+            src={data.src}
+            alt={data.alt}
+            width={1920}
+            height={1080}
+            sizes="100vw"
+            className="object-contain w-full h-auto max-w-full max-h-full"
+            priority
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={() => setZoomed(false)}
+            className="fixed top-3 right-3 w-10 h-10 rounded-full bg-white/90 text-[var(--foreground)] flex items-center justify-center text-xl border border-[var(--card-border)]"
+            aria-label="閉じる"
+          >
+            ✕
+          </button>
+          <div className="fixed bottom-3 inset-x-0 text-center text-white/70 text-xs">
+            タップ または Esc で閉じる ・ ピンチで拡大
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
