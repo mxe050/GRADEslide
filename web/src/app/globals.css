@@ -324,8 +324,6 @@ html, body {
 .markdown-body strong {
   color: var(--primary);
   font-weight: 700;
-  background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--primary) 18%, transparent) 60%);
-  padding: 0 0.05em;
 }
 .markdown-body em { color: var(--accent); font-style: normal; font-weight: 600; }
 .markdown-body code {
@@ -338,8 +336,6 @@ html, body {
 .visual-bullet strong {
   color: var(--primary);
   font-weight: 700;
-  background: linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--primary) 16%, transparent) 60%);
-  padding: 0 0.05em;
 }
 
 /* Slightly tighter narration bullets/tables on mobile */

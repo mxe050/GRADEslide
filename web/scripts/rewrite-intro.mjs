@@ -43,7 +43,7 @@ const SLIDES_JSON = path.resolve(
   "slides.json"
 );
 
-const SECTION = "0. 導入：A薬の発表をどう読むべきか";
+const SECTION = "0. 導入：G先生に学ぶ";
 
 /** Build a dialogue narration string from an array of {speaker, text}. */
 function dialogue(turns) {
