@@ -178,17 +178,21 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
         <motion.main
           key={slide.id}
           {...slideTransition}
-          className="flex-1 flex flex-col gap-4 md:gap-6 px-3 md:px-6 py-3 md:py-5 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] max-w-[1400px] mx-auto w-full"
+          className="flex-1 flex flex-col gap-3 md:gap-6 px-2.5 md:px-6 py-2.5 md:py-5 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] max-w-[1400px] mx-auto w-full"
         >
           {/* 16:9 stage on top — visible on every device. Container queries
               inside VisualPanel make the typography scale to fit the box, so
-              even the small mobile-portrait stage stays readable. */}
+              even the small mobile-portrait stage stays readable.
+              On narrow phones the visual stays compact (~16:9 of viewport
+              width) so most of the screen below is dedicated to the narration
+              — the primary reading content. */}
           <section className="w-full flex justify-center">
             <div className="reading-stage">
               <VisualPanel slide={slide} />
             </div>
           </section>
-          {/* Narration below — comfortable reading width and font size. */}
+          {/* Narration below — comfortable reading width and font size,
+              tuned for one-handed thumb scrolling on mobile. */}
           <section className="w-full max-w-3xl mx-auto">
             <NarrationPanel slide={slide} />
           </section>

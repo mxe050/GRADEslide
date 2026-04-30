@@ -424,12 +424,153 @@ html, body {
   font-weight: 700;
 }
 
-/* Slightly tighter narration bullets/tables on mobile */
-.narration-body { word-break: break-word; }
-.narration-body table { border-collapse: collapse; }
+/* =========================================================================
+   Narration body — mobile-first long-form reading.
+   Tuned for one-handed scrolling on a phone (thumb-reachable bottom nav,
+   comfortable line-height for Japanese, generous breathing room for HR
+   dividers and headings inside long markdown).
+   ========================================================================= */
+.narration-body {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+}
+
+.narration-body > :first-child { margin-top: 0; }
+.narration-body > :last-child  { margin-bottom: 0; }
+
+.narration-body p {
+  margin: 0.85em 0;
+}
+
+.narration-body strong {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.narration-body em {
+  font-style: normal;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.narration-body h2,
+.narration-body h3,
+.narration-body h4 {
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--primary);
+}
+.narration-body h2 {
+  font-size: 1.15em;
+  margin: 1.6em 0 0.55em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid var(--primary-soft);
+}
+.narration-body h3 {
+  font-size: 1.08em;
+  margin: 1.4em 0 0.45em;
+  padding: 0.25em 0 0.25em 0.65em;
+  border-left: 4px solid var(--primary);
+  color: var(--slide-title-fg);
+  background: color-mix(in srgb, var(--primary-soft) 35%, transparent);
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+.narration-body h4 {
+  font-size: 1.0em;
+  margin: 1.1em 0 0.35em;
+  color: var(--primary-hover);
+}
+
+.narration-body blockquote {
+  margin: 1em 0;
+  padding: 0.7em 0.9em;
+  border-left: 4px solid var(--quote-border);
+  background: color-mix(in srgb, var(--primary-soft) 30%, transparent);
+  border-radius: 0 0.45rem 0.45rem 0;
+  color: var(--foreground);
+  font-size: 0.97em;
+}
+.narration-body blockquote p { margin: 0.35em 0; }
+
+.narration-body hr {
+  border: 0;
+  border-top: 1px dashed var(--card-strong-border);
+  margin: 1.4em 0;
+  opacity: 0.55;
+}
+
+.narration-body ul,
+.narration-body ol {
+  padding-left: 1.45em;
+  margin: 0.75em 0;
+}
+.narration-body li {
+  margin: 0.35em 0;
+  line-height: 1.75;
+}
+.narration-body li > ul,
+.narration-body li > ol {
+  margin: 0.3em 0;
+}
+
+.narration-body code {
+  background: color-mix(in srgb, var(--card-border) 60%, transparent);
+  padding: 0.1em 0.4em;
+  border-radius: 0.3rem;
+  font-size: 0.9em;
+  word-break: break-word;
+}
+.narration-body pre {
+  background: color-mix(in srgb, var(--card-border) 40%, transparent);
+  padding: 0.85em 1em;
+  border-radius: 0.55rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 0.85em;
+  line-height: 1.55;
+  margin: 1em 0;
+}
+.narration-body pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  white-space: pre;
+}
+
+/* Table: become horizontally scrollable on narrow screens. */
+.narration-body table {
+  display: block;
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1em 0;
+  font-size: 0.93em;
+}
 .narration-body table th,
-.narration-body table td { border: 1px solid var(--card-border); padding: 0.4em 0.6em; }
-.narration-body table th { background: var(--primary-soft); color: var(--primary-hover); }
+.narration-body table td {
+  border: 1px solid var(--card-border);
+  padding: 0.45em 0.7em;
+  vertical-align: top;
+  white-space: normal;
+}
+.narration-body table th {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Tighter spacing on small viewports — maximize reading area for one-handed
+   thumb scrolling. */
+@media (max-width: 640px) {
+  .narration-body { letter-spacing: 0; line-height: 1.85; }
+  .narration-body p { margin: 0.75em 0; }
+  .narration-body hr { margin: 1.15em 0; }
+  .narration-body h3 { padding: 0.2em 0 0.2em 0.55em; }
+}
 
 /* =========================================================================
    Misc utilities

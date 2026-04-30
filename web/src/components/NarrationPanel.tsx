@@ -14,9 +14,9 @@ export function NarrationPanel({ slide }: Props) {
     .map((id) => getCitation(id))
     .filter((c): c is Citation => Boolean(c));
   return (
-    <div className="fade-in flex flex-col gap-4 md:gap-5 rounded-2xl bg-[var(--card)] border border-[var(--card-border)] p-5 md:p-7 shadow-sm">
+    <div className="fade-in flex flex-col gap-3 md:gap-5 rounded-xl md:rounded-2xl bg-[var(--card)] border border-[var(--card-border)] px-4 py-4 md:px-7 md:py-7 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+        <h3 className="text-[11px] md:text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
           解説（G先生より）
         </h3>
         <span className="text-[10px] md:text-xs text-[var(--muted-soft)] font-medium">
@@ -25,7 +25,7 @@ export function NarrationPanel({ slide }: Props) {
       </div>
 
       {slide.warnings && slide.warnings.length > 0 && (
-        <div className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-fg)] px-4 py-3 text-base flex gap-3">
+        <div className="rounded-lg border border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-fg)] px-3.5 py-2.5 md:px-4 md:py-3 text-[15px] md:text-base flex gap-3">
           <span aria-hidden="true" className="text-lg shrink-0">⚠️</span>
           <ul className="list-none flex-1 space-y-1.5 leading-relaxed">
             {slide.warnings.map((w, i) => (
@@ -35,7 +35,7 @@ export function NarrationPanel({ slide }: Props) {
         </div>
       )}
 
-      <div className="narration-body text-base md:text-lg leading-loose text-[var(--foreground)]">
+      <div className="narration-body text-[16.5px] md:text-lg text-[var(--foreground)]">
         <MarkdownText text={slide.narration} />
       </div>
 
