@@ -10,8 +10,6 @@ import type { ThemeMode } from "@/lib/store";
 import { getFirstSlide, getSlideById, getAllSlides, getAppData } from "@/lib/slides";
 import { PushToGitHub } from "./PushToGitHub";
 
-const IS_DEV = process.env.NODE_ENV === "development";
-
 interface Props {
   slide: Slide;
 }
@@ -160,9 +158,11 @@ function EditToggle({
       </button>
       {/* 「GitHub 送信」 / 「JSON」 / 「全破棄」 は **編集モード OFF でも**
           overlay (= 編集) が存在すれば表示する。編集モード切替後にうっかり
-          ボタンを見失わないように。dev でない時 / overlay が無い時は何も
-          描画しない (DOM 増えない)。 */}
-      {IS_DEV && overlayCount > 0 && <PushToGitHub />}
+          ボタンを見失わないように。
+          安全性: 「GitHub 送信」 ボタンを押しても、API ルート側が本番モードで
+          403 を返すので、本番デプロイ時は何も書き換わらない。UI 側で隠さない
+          ことで「dev かどうか分からない問題」 を回避する。 */}
+      {overlayCount > 0 && <PushToGitHub />}
       {overlayCount > 0 && (
         <>
           <button
