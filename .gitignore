@@ -41,3 +41,10 @@ pptx_work/sample.pptx
 # Ad-hoc temp
 *.tmp
 .cache/
+
+# slides.json backups created by /api/save-and-push (dev only)
+web/public/data/slides.json.bak.*
+web/public/data/slides.json.tmp.*
+
+# Locally downloaded merged exports (✎ JSON エクスポート)
+slides.edited.*.json

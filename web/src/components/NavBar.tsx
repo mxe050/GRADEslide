@@ -8,6 +8,9 @@ import { useEditStore, mergeSlide, type SlideOverlay } from "@/lib/editStore";
 import type { Slide } from "@/lib/types";
 import type { ThemeMode } from "@/lib/store";
 import { getFirstSlide, getSlideById, getAllSlides, getAppData } from "@/lib/slides";
+import { PushToGitHub } from "./PushToGitHub";
+
+const IS_DEV = process.env.NODE_ENV === "development";
 
 interface Props {
   slide: Slide;
@@ -157,6 +160,9 @@ function EditToggle({
       </button>
       {editMode && (
         <>
+          {/* dev サーバー時のみ「GitHub に送信」 を表示。本番ビルドでは
+              そもそも /api/save-and-push が 403 を返す & ボタンも非表示。 */}
+          {IS_DEV && <PushToGitHub />}
           <button
             type="button"
             onClick={onExport}
