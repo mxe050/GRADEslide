@@ -4,25 +4,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditStore, mergeSlide, hasMeaningfulOverlay } from "@/lib/editStore";
 import { getAllSlides, getAppData } from "@/lib/slides";
 import type { Slide } from "@/lib/types";
+import type { SlideOverlay } from "@/lib/editStore";
 
 /**
  * PushToGitHub — クライアントから直接 GitHub REST API を叩いて
  * slides.json を 1 ファイルだけ書き換える方式。
  *
- * なぜこの方式か:
- *   - Vercel 上で動かす必要がある (=サーバー側で git/fs は使えない)
- *   - Node 24 + Google Drive で `npm run dev` が起動しない場合がある
- *     (\\?\ extended-length path 問題) → dev API ルートも実用しづらい
- *
  * 安全策:
- *   - GitHub Fine-grained PAT を localStorage に保存。スコープは
- *     「Contents: Read and write」 + 対象リポジトリ 1 つだけ にする
- *   - PUT /repos/{owner}/{repo}/contents/{path} は **そのファイルだけ** を
- *     書き換える GitHub REST API。他のファイルは絶対に変わらない
- *   - 送信前に、現行ファイルの sha を GET で取得し PUT に同梱 →
- *     他者の変更を踏み潰さない (sha 不一致なら GitHub 側で 409)
- *   - 送信前に JSON 構造を検証 (slides 配列 / id 重複 / 必須フィールド)
- *   - 失敗時は localStorage の overlay は保持される (リトライ可)
+ *   - GitHub Fine-grained PAT を localStorage に保存 (key: gradeslide-github-pat)
+ *   - スコープは「Contents: Read and write」 + 対象リポジトリ 1 つのみ → 漏洩時の被害は最小
+ *   - PUT /repos/{owner}/{repo}/contents/{path} は **そのファイル 1 つだけ** を書き換える
+ *   - 送信前に sha 取得 → 競合検出 (409) で安全に止まる
+ *   - 送信前に JSON 構造を検証
+ *   - 失敗時は localStorage の overlay を保持 → リトライ可
+ *
+ * UX:
+ *   - 初回 / 期限切れ時 (401): 番号付きウィザードで手取り足取りガイド
+ *   - コピーボタンで GitHub の入力欄に貼るだけ
+ *   - 「テスト」 ボタンで保存前に PAT が動くか確認
+ *   - 90 日ごとの更新もウィザードで完結
  */
 
 /* ----------- 設定 (このリポジトリ専用にハードコード) ----------- */
@@ -31,6 +31,11 @@ const GITHUB_REPO = "GRADEslide";
 const GITHUB_BRANCH = "main";
 const FILE_PATH = "web/public/data/slides.json";
 const PAT_KEY = "gradeslide-github-pat";
+
+const REPO_FULL = `${GITHUB_OWNER}/${GITHUB_REPO}`;
+const TOKEN_NAME_DEFAULT = "GRADEslide editor";
+const NEW_PAT_URL = "https://github.com/settings/personal-access-tokens/new";
+const TOKEN_LIST_URL = "https://github.com/settings/tokens?type=beta";
 
 interface Props {
   className?: string;
@@ -42,8 +47,11 @@ type ApiResult = {
   commitHash?: string;
   htmlUrl?: string;
   error?: string;
+  errorKind?: "auth" | "permission" | "conflict" | "validation" | "network" | "other";
   logs: StepLog[];
 };
+
+/* ============== ボタン本体 ============== */
 
 export function PushToGitHub({ className }: Props) {
   const overlays = useEditStore((s) => s.overlays);
@@ -91,35 +99,37 @@ export function PushToGitHub({ className }: Props) {
   );
 }
 
-/* ============== モーダル本体 ============== */
+/* ============== モーダル ============== */
 
 function PushModal({
   overlays,
   clearAll,
   onClose,
 }: {
-  overlays: Record<string, unknown>;
+  overlays: Record<string, SlideOverlay>;
   clearAll: () => void;
   onClose: () => void;
 }) {
-  // Hydrate PAT from localStorage on mount.
+  // PAT を localStorage から hydrate
   const [pat, setPatState] = useState<string | null>(null);
-  const [patHydrated, setPatHydrated] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [forceWizard, setForceWizard] = useState(false);
   useEffect(() => {
     setPatState(typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) : null);
-    setPatHydrated(true);
+    setHydrated(true);
   }, []);
 
-  function handleSavePat(value: string) {
+  function savePat(value: string) {
     if (typeof window !== "undefined") localStorage.setItem(PAT_KEY, value);
     setPatState(value);
+    setForceWizard(false);
   }
-  function handleClearPat() {
+  function clearPat() {
     if (typeof window !== "undefined") localStorage.removeItem(PAT_KEY);
     setPatState(null);
+    setForceWizard(true);
   }
 
-  // ESC closes when not busy
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -131,7 +141,7 @@ function PushModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
@@ -142,23 +152,20 @@ function PushModal({
         onClick={onClose}
         className="absolute inset-0 bg-black/55 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-xl rounded-2xl bg-[var(--background)] border border-[var(--card-border)] shadow-2xl flex flex-col max-h-[90vh]">
-        {!patHydrated ? (
+      <div className="relative w-full max-w-2xl rounded-2xl bg-[var(--background)] border border-[var(--card-border)] shadow-2xl flex flex-col max-h-[94vh]">
+        {!hydrated ? (
           <div className="px-5 py-12 text-center text-sm text-[var(--muted)]">
             読み込み中…
           </div>
-        ) : !pat ? (
-          <PatSetup
-            onSave={handleSavePat}
-            onClose={onClose}
-          />
+        ) : !pat || forceWizard ? (
+          <PatWizard onSave={savePat} onClose={onClose} />
         ) : (
           <CommitFlow
             pat={pat}
-            overlays={overlays as Record<string, import("@/lib/editStore").SlideOverlay>}
+            overlays={overlays}
             onClearOverlays={clearAll}
             onClose={onClose}
-            onChangePat={handleClearPat}
+            onRenewPat={clearPat}
             onBusyChange={setBusy}
           />
         )}
@@ -167,31 +174,87 @@ function PushModal({
   );
 }
 
-/* ============== PAT 初期設定画面 ============== */
+/* ============== PAT セットアップウィザード ============== */
 
-function PatSetup({
+function PatWizard({
   onSave,
   onClose,
 }: {
   onSave: (value: string) => void;
   onClose: () => void;
 }) {
-  const [value, setValue] = useState("");
+  const [pasted, setPasted] = useState("");
   const [show, setShow] = useState(false);
   const [agree, setAgree] = useState(false);
+  const [step, setStep] = useState(1); // 進行中ステップ。コピーや GitHub オープンで自動進行
+  const [test, setTest] = useState<
+    | { kind: "idle" }
+    | { kind: "running" }
+    | { kind: "ok"; rateRemaining?: string }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" });
   const inputRef = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  const trimmed = value.trim();
+
+  const trimmed = pasted.trim();
   const looksValid =
     trimmed.startsWith("github_pat_") || trimmed.startsWith("ghp_") || trimmed.length >= 30;
+
+  async function runTest() {
+    if (!looksValid) return;
+    setTest({ kind: "running" });
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}?ref=${GITHUB_BRANCH}&t=${Date.now()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${trimmed}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+          cache: "no-store",
+        }
+      );
+      const rateRemaining = res.headers.get("x-ratelimit-remaining") ?? undefined;
+      if (res.ok) {
+        setTest({ kind: "ok", rateRemaining });
+      } else if (res.status === 401) {
+        setTest({ kind: "error", message: "PAT が無効、または期限切れです。新しく作成し直してください。" });
+      } else if (res.status === 403) {
+        setTest({
+          kind: "error",
+          message:
+            "権限不足 (403)。Fine-grained PAT の場合、Repository access に " +
+            REPO_FULL +
+            " が含まれているか / Permissions の Contents が「Read and write」 か を確認してください。",
+        });
+      } else if (res.status === 404) {
+        setTest({
+          kind: "error",
+          message:
+            "リポジトリ / ファイルが見つかりません (404)。Repository access の選択でこのリポジトリが入っているか確認してください。",
+        });
+      } else {
+        const txt = await res.text();
+        setTest({ kind: "error", message: `エラー (${res.status}): ${txt.slice(0, 160)}` });
+      }
+    } catch (e) {
+      setTest({
+        kind: "error",
+        message: "ネットワークエラー: " + (e instanceof Error ? e.message : String(e)),
+      });
+    }
+  }
+
+  function focusInput() {
+    setStep(5);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
 
   return (
     <>
       <header className="px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
-        <span className="text-base font-bold">🔑 初回設定: GitHub Personal Access Token</span>
-        <span className="ml-auto" />
+        <span className="text-base font-bold">🔑 GitHub PAT のセットアップ</span>
+        <span className="ml-auto text-xs text-[var(--muted)]">90 日に 1 回</span>
         <button
           type="button"
           onClick={onClose}
@@ -201,67 +264,132 @@ function PatSetup({
           ✕
         </button>
       </header>
-      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed">
-        <p>
-          編集内容を GitHub にコミットするために、**この PC のブラウザ** に
-          1 度だけ GitHub の Personal Access Token (PAT) を保存します。
-        </p>
 
-        <section className="rounded-md border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--foreground)] px-3 py-3 text-[13px]">
-          <h4 className="font-bold mb-1.5 text-[var(--info)]">📌 PAT の作り方 (推奨)</h4>
-          <ol className="list-decimal pl-5 space-y-1">
-            <li>
-              <a
-                href="https://github.com/settings/personal-access-tokens/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--primary)] underline font-semibold"
-              >
-                Fine-grained PAT 作成ページ
-              </a>{" "}
-              を開く
-            </li>
-            <li><strong>Token name</strong>: 任意 (例: "GRADEslide editor")</li>
-            <li><strong>Expiration</strong>: 90 days など (短い方が安全)</li>
-            <li>
-              <strong>Repository access</strong> →{" "}
-              <strong>Only select repositories</strong> →{" "}
-              <code className="px-1 py-0.5 rounded bg-[var(--card)] text-xs">
-                {GITHUB_OWNER}/{GITHUB_REPO}
-              </code>{" "}
-              のみを選択
-            </li>
-            <li>
-              <strong>Repository permissions</strong> →{" "}
-              <strong>Contents</strong> を{" "}
-              <strong>「Read and write」</strong>{" "}
-              に設定
-            </li>
-            <li>
-              <strong>Generate token</strong> ボタンを押し、表示された{" "}
-              <code className="px-1 py-0.5 rounded bg-[var(--card)] text-xs">
-                github_pat_…
-              </code>{" "}
-              を下にコピペ
-            </li>
-          </ol>
-          <p className="mt-2 text-[12px] text-[var(--muted)]">
-            ※ 古い 「Classic PAT」 (
-            <code className="px-1 py-0.5 rounded bg-[var(--card)] text-[11px]">ghp_…</code>
-            ) でも動きます (scope: <code>repo</code>)。
+      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed">
+        {/* Intro */}
+        <section className="rounded-lg border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--foreground)] px-4 py-3">
+          <h4 className="font-bold text-[var(--info)] mb-1.5">
+            ❓ PAT (Personal Access Token) って何ですか？
+          </h4>
+          <p className="text-[13px]">
+            GitHub に書き込みするための <strong>「専用のカギ」</strong> です。アカウントのパスワードよりずっと安全で、
+            <strong>「このリポジトリのファイルを更新する」 という権限だけ</strong> に絞ったカギを作って使います。
           </p>
+          <ul className="mt-2 text-[12px] list-disc pl-5 space-y-0.5 text-[var(--muted)]">
+            <li>アカウントには触れません (パスワード変更や課金などはできません)</li>
+            <li>万一漏れても <code className="px-1 bg-[var(--card)] rounded">{REPO_FULL}</code> のファイル書換だけ。コミット履歴で全部見えるので revert も可能</li>
+            <li>下のリンクからいつでも取り消せます (Revoke)</li>
+            <li>90 日に 1 回、ここでもう一度作り直すだけ</li>
+          </ul>
         </section>
 
-        <section>
-          <label className="block text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] mb-1">
-            PAT を貼り付け
-          </label>
+        {/* Step 1 */}
+        <StepBlock
+          n={1}
+          title="GitHub の作成ページを開く"
+          active={step >= 1}
+          done={step > 1}
+        >
+          <a
+            href={NEW_PAT_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setStep(Math.max(step, 2))}
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+          >
+            🔗 GitHub の PAT 作成ページを開く
+          </a>
+          <p className="mt-2 text-[12px] text-[var(--muted)]">
+            別タブで GitHub が開きます。GitHub にログインしていない場合は先にログインしてください。
+          </p>
+        </StepBlock>
+
+        {/* Step 2: Token name */}
+        <StepBlock
+          n={2}
+          title="Token name (名前) に貼り付け"
+          active={step >= 2}
+          done={step > 2}
+        >
+          <p className="text-[13px] mb-1.5">
+            GitHub の <strong>Token name</strong> 欄に、下のテキストをコピーして貼り付けてください:
+          </p>
+          <CopyRow value={TOKEN_NAME_DEFAULT} onCopied={() => setStep(Math.max(step, 3))} />
+        </StepBlock>
+
+        {/* Step 3: Expiration */}
+        <StepBlock
+          n={3}
+          title="Expiration (有効期限) を 90 days に"
+          active={step >= 3}
+          done={step > 3}
+        >
+          <p className="text-[13px]">
+            プルダウンから <strong>「90 days」</strong> を選びます (お好みで他の期間でも OK)。
+          </p>
+        </StepBlock>
+
+        {/* Step 4: Repository access + Permissions */}
+        <StepBlock
+          n={4}
+          title="リポジトリと権限を設定"
+          active={step >= 4}
+          done={step > 4}
+        >
+          <ol className="list-decimal pl-5 space-y-2 text-[13px]">
+            <li>
+              <strong>Repository access</strong> →{" "}
+              <strong>「Only select repositories」</strong> をチェック
+            </li>
+            <li>
+              <strong>Select repositories</strong> の検索欄に下の名前を貼り付け、出てきた候補をクリック:
+              <div className="mt-1.5">
+                <CopyRow value={REPO_FULL} />
+              </div>
+            </li>
+            <li>
+              <strong>Permissions → Repository permissions</strong> を開く (▶ をクリック)
+            </li>
+            <li>
+              <strong>Contents</strong> の Access を <strong>「Read and write」</strong> に変更
+              <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                (他の項目はそのまま「No access」 のままで OK)
+              </p>
+            </li>
+          </ol>
+          <button
+            type="button"
+            onClick={() => setStep(Math.max(step, 5))}
+            className="mt-3 text-xs px-3 py-1.5 rounded-md border border-[var(--card-border)] hover:bg-[var(--card-border)]/60"
+          >
+            設定できた → 次へ
+          </button>
+        </StepBlock>
+
+        {/* Step 5: Generate + Paste */}
+        <StepBlock
+          n={5}
+          title="Generate token を押して、表示されたトークンをここに貼り付け"
+          active={step >= 5}
+        >
+          <p className="text-[13px] mb-1.5">
+            ページ下の <strong>「Generate token」</strong> ボタンを押すと、
+            <code className="mx-0.5 px-1 rounded bg-[var(--card)] text-xs">github_pat_…</code>
+            で始まる長い文字列が表示されます。
+          </p>
+          <p className="text-[12px] text-[var(--bad)] font-bold mb-1.5">
+            ⚠ この画面を閉じると 2 度と表示されません。今すぐコピーしてここに貼り付けてください。
+          </p>
           <div className="flex items-stretch gap-1.5">
             <input
               ref={inputRef}
               type={show ? "text" : "password"}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
+              value={pasted}
+              onChange={(e) => {
+                setPasted(e.target.value);
+                setTest({ kind: "idle" });
+              }}
+              onFocus={focusInput}
               placeholder="github_pat_..."
               className="flex-1 rounded-md border border-[var(--card-border)] bg-[var(--card)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/25"
               autoComplete="off"
@@ -278,44 +406,81 @@ function PatSetup({
           </div>
           {trimmed.length > 0 && !looksValid && (
             <p className="mt-1 text-[11px] text-[var(--bad)]">
-              形式が PAT らしくありません。`github_pat_` か `ghp_` で始まるはずです。
+              形式が PAT らしくありません。github_pat_ か ghp_ で始まる文字列をそのまま貼り付けてください。
             </p>
           )}
-        </section>
 
+          {/* Test */}
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={runTest}
+              disabled={!looksValid || test.kind === "running"}
+              className="text-xs px-3 py-1.5 rounded-md border border-[var(--card-border)] hover:bg-[var(--card-border)]/60 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
+            >
+              {test.kind === "running" && (
+                <span
+                  className="inline-block w-3 h-3 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin"
+                  aria-hidden="true"
+                />
+              )}
+              <span>動作テスト</span>
+            </button>
+            <span className="text-[11px] text-[var(--muted)]">
+              GitHub に読み取りリクエストを 1 回送って動くか確認します (書き込みません)
+            </span>
+          </div>
+          {test.kind === "ok" && (
+            <p className="mt-2 text-[12px] rounded-md border border-[var(--good)] bg-[var(--good-soft)]/50 text-[var(--good)] px-2 py-1.5">
+              ✓ 動作確認 OK。下の同意チェック → 「保存」 で完了です。
+              {test.rateRemaining && (
+                <span className="ml-1 text-[10px] opacity-70">
+                  (rate limit 残り {test.rateRemaining})
+                </span>
+              )}
+            </p>
+          )}
+          {test.kind === "error" && (
+            <p className="mt-2 text-[12px] rounded-md border border-[var(--bad)] bg-[var(--bad-soft)]/50 text-[var(--bad)] px-2 py-1.5">
+              × {test.message}
+            </p>
+          )}
+        </StepBlock>
+
+        {/* Agreement */}
         <section className="rounded-md border border-[var(--warning-border)] bg-[var(--warning-bg)] text-[var(--warning-fg)] px-3 py-3 text-[12px] leading-relaxed">
-          <strong>⚠ 保存前にご確認:</strong>
-          <ul className="list-disc pl-5 mt-1 space-y-0.5">
-            <li>
-              PAT は **このブラウザの localStorage** に保存されます (この PC を共有していない前提)
-            </li>
-            <li>
-              PAT が漏れたら GitHub の{" "}
-              <a
-                href="https://github.com/settings/tokens"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline font-semibold"
-              >
-                Token 設定
-              </a>{" "}
-              で即座に Revoke できます
-            </li>
-            <li>
-              スコープを上記 ({GITHUB_OWNER}/{GITHUB_REPO} の Contents だけ) に絞っているので、漏れても被害は **このリポジトリの書き換えだけ** に限定されます
-            </li>
-          </ul>
-          <label className="flex items-start gap-2 mt-2 cursor-pointer">
+          <label className="flex items-start gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
               className="mt-0.5"
             />
-            <span>上記を理解した上で、この PC のブラウザに PAT を保存することに同意します</span>
+            <span>
+              この PC のブラウザの localStorage に PAT を保存することに同意します。
+              <span className="ml-1 text-[11px] opacity-80">
+                (この PC を他人と共有していない前提)
+              </span>
+            </span>
           </label>
         </section>
+
+        <p className="text-[11px] text-[var(--muted)]">
+          90 日後に期限が切れたら、もう一度このウィザードが出てきます。同じ手順で更新するだけ。
+          <br />
+          いつでも{" "}
+          <a
+            href={TOKEN_LIST_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--primary)] underline"
+          >
+            Token 一覧 ↗
+          </a>{" "}
+          から Revoke できます。
+        </p>
       </div>
+
       <footer className="border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
         <span className="ml-auto" />
         <button
@@ -328,13 +493,107 @@ function PatSetup({
         <button
           type="button"
           onClick={() => onSave(trimmed)}
-          disabled={!agree || !looksValid}
+          disabled={!agree || !looksValid || test.kind === "error"}
+          title={
+            !looksValid
+              ? "PAT を貼り付けてください"
+              : test.kind === "error"
+                ? "テストでエラーが出ています — 解消してください"
+                : !agree
+                  ? "同意チェックを入れてください"
+                  : "PAT を保存して送信画面へ"
+          }
           className="text-sm font-bold px-4 py-1.5 rounded-md bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           保存して続ける
         </button>
       </footer>
     </>
+  );
+}
+
+/* ----------- ウィザード補助コンポーネント ----------- */
+
+function StepBlock({
+  n,
+  title,
+  active,
+  done,
+  children,
+}: {
+  n: number;
+  title: string;
+  active: boolean;
+  done?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={
+        "rounded-lg border p-3 sm:p-4 transition " +
+        (done
+          ? "border-[var(--good)] bg-[var(--good-soft)]/30"
+          : active
+            ? "border-[var(--primary)] bg-[var(--card)]"
+            : "border-[var(--card-border)] bg-[var(--card)] opacity-70")
+      }
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span
+          className={
+            "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold " +
+            (done
+              ? "bg-[var(--good)] text-white"
+              : active
+                ? "bg-[var(--primary)] text-white"
+                : "bg-[var(--card-border)] text-[var(--muted)]")
+          }
+        >
+          {done ? "✓" : n}
+        </span>
+        <h4 className="text-sm font-bold">{title}</h4>
+      </div>
+      <div className="pl-8">{children}</div>
+    </section>
+  );
+}
+
+function CopyRow({
+  value,
+  onCopied,
+}: {
+  value: string;
+  onCopied?: () => void;
+}) {
+  const [done, setDone] = useState(false);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setDone(true);
+      onCopied?.();
+      setTimeout(() => setDone(false), 1500);
+    } catch {
+      // fallback: select the input so user can Ctrl+C
+    }
+  }
+  return (
+    <div className="inline-flex items-stretch gap-1.5 max-w-full">
+      <code className="flex-1 min-w-0 px-2 py-1.5 rounded-md bg-[var(--card)] border border-[var(--card-border)] text-[13px] font-mono truncate">
+        {value}
+      </code>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={
+          "shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-bold border transition " +
+          (done
+            ? "bg-[var(--good)] text-white border-[var(--good)]"
+            : "bg-[var(--primary)] text-white border-[var(--primary)] hover:bg-[var(--primary-hover)]")
+        }
+      >
+        {done ? "✓ コピー済" : "📋 コピー"}
+      </button>
+    </div>
   );
 }
 
@@ -345,14 +604,14 @@ function CommitFlow({
   overlays,
   onClearOverlays,
   onClose,
-  onChangePat,
+  onRenewPat,
   onBusyChange,
 }: {
   pat: string;
-  overlays: Record<string, import("@/lib/editStore").SlideOverlay>;
+  overlays: Record<string, SlideOverlay>;
   onClearOverlays: () => void;
   onClose: () => void;
-  onChangePat: () => void;
+  onRenewPat: () => void;
   onBusyChange: (busy: boolean) => void;
 }) {
   const editedSlides = useMemo<Slide[]>(() => {
@@ -385,17 +644,21 @@ function CommitFlow({
       };
       log("merge", true, `slides=${merged.slides.length}`);
 
-      // 2. Validate locally
+      // 2. Validate
       const v = validateAppData(merged);
       if (!v.ok) {
-        setResult({ ok: false, error: v.error, logs: [...logs, { step: "validate", ok: false, detail: v.error }] });
+        setResult({
+          ok: false,
+          errorKind: "validation",
+          error: v.error,
+          logs: [...logs, { step: "validate", ok: false, detail: v.error }],
+        });
         setBusy(false);
         return;
       }
       log("validate", true, `slides=${v.slidesCount}`);
 
-      // 3. Get current sha from GitHub
-      log("github-get", false, "fetching current sha…");
+      // 3. Get current sha
       const headers = {
         Authorization: `Bearer ${pat}`,
         Accept: "application/vnd.github+json",
@@ -405,17 +668,26 @@ function CommitFlow({
         `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}?ref=${GITHUB_BRANCH}&t=${Date.now()}`,
         { headers, cache: "no-store" }
       );
-      logs.pop();
       if (!getRes.ok) {
+        if (getRes.status === 401) {
+          log("github-get", false, "401 Unauthorized");
+          setResult({
+            ok: false,
+            errorKind: "auth",
+            error: "PAT が無効、または期限切れです (90 日経過した可能性があります)。",
+            logs,
+          });
+          setBusy(false);
+          return;
+        }
         const text = await getRes.text();
-        const msg =
-          getRes.status === 401
-            ? "PAT が無効か期限切れです。再設定してください。"
-            : getRes.status === 404
-              ? "リポジトリ / ファイルが見つかりません。"
-              : `GitHub から現在のファイル取得に失敗 (${getRes.status})`;
-        log("github-get", false, msg);
-        setResult({ ok: false, error: msg + " — " + text.slice(0, 200), logs });
+        log("github-get", false, `${getRes.status}`);
+        setResult({
+          ok: false,
+          errorKind: getRes.status === 403 ? "permission" : "other",
+          error: `現在のファイル取得に失敗 (${getRes.status}): ${text.slice(0, 200)}`,
+          logs,
+        });
         setBusy(false);
         return;
       }
@@ -423,7 +695,7 @@ function CommitFlow({
       const sha = current.sha as string;
       log("github-get", true, `sha=${sha.slice(0, 7)}`);
 
-      // 4. Encode new content as base64 (UTF-8 safe)
+      // 4. Encode
       const json = JSON.stringify(merged, null, 2) + "\n";
       const utf8 = new TextEncoder().encode(json);
       let binary = "";
@@ -431,7 +703,7 @@ function CommitFlow({
       const contentBase64 = btoa(binary);
       log("encode", true, `${json.length} chars`);
 
-      // 5. PUT to GitHub
+      // 5. PUT
       const putRes = await fetch(
         `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`,
         {
@@ -453,16 +725,48 @@ function CommitFlow({
         } catch {
           /* ignore */
         }
-        const head =
-          putRes.status === 401
-            ? "PAT が無効か権限不足です。"
-            : putRes.status === 409
-              ? "競合: 別の変更が先に commit されています。ページを再読み込みしてやり直してください。"
-              : putRes.status === 422
-                ? "GitHub に拒否されました (422)。"
-                : `送信失敗 (${putRes.status})`;
-        log("github-put", false, head + (parsedMsg ? " — " + parsedMsg : ""));
-        setResult({ ok: false, error: head + (parsedMsg ? " — " + parsedMsg : ""), logs });
+        if (putRes.status === 401) {
+          log("github-put", false, "401 Unauthorized");
+          setResult({
+            ok: false,
+            errorKind: "auth",
+            error: "PAT が無効、または期限切れです。",
+            logs,
+          });
+        } else if (putRes.status === 409) {
+          log("github-put", false, "409 Conflict");
+          setResult({
+            ok: false,
+            errorKind: "conflict",
+            error:
+              "競合: 別の変更が先に commit されています。ページを再読み込みしてやり直してください。",
+            logs,
+          });
+        } else if (putRes.status === 422) {
+          log("github-put", false, `422 ${parsedMsg}`);
+          setResult({
+            ok: false,
+            errorKind: "validation",
+            error: `GitHub に拒否されました (422): ${parsedMsg}`,
+            logs,
+          });
+        } else if (putRes.status === 403) {
+          log("github-put", false, `403 ${parsedMsg}`);
+          setResult({
+            ok: false,
+            errorKind: "permission",
+            error: `権限不足 (403): ${parsedMsg || "PAT の Contents 権限が Read and write になっているか確認してください。"}`,
+            logs,
+          });
+        } else {
+          log("github-put", false, `${putRes.status}`);
+          setResult({
+            ok: false,
+            errorKind: "other",
+            error: `送信失敗 (${putRes.status}): ${parsedMsg || errText.slice(0, 200)}`,
+            logs,
+          });
+        }
         setBusy(false);
         return;
       }
@@ -476,7 +780,7 @@ function CommitFlow({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       logs.push({ step: "exception", ok: false, detail: msg });
-      setResult({ ok: false, error: "ネットワーク等のエラー: " + msg, logs });
+      setResult({ ok: false, errorKind: "network", error: "ネットワーク等のエラー: " + msg, logs });
     } finally {
       setBusy(false);
     }
@@ -492,12 +796,12 @@ function CommitFlow({
         <span className="ml-auto" />
         <button
           type="button"
-          onClick={onChangePat}
+          onClick={onRenewPat}
           disabled={busy}
-          title="PAT を再設定"
-          className="text-xs px-2 py-1 rounded-md hover:bg-[var(--card-border)]/60 disabled:opacity-40"
+          title="PAT を作り直す (90 日に 1 回)"
+          className="text-xs px-2 py-1 rounded-md hover:bg-[var(--card-border)]/60 disabled:opacity-40 inline-flex items-center gap-1"
         >
-          🔑 PAT
+          🔑 PAT を更新
         </button>
         <button
           type="button"
@@ -548,7 +852,7 @@ function CommitFlow({
         <section className="rounded-md border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--info)] px-3 py-2 text-[12px] leading-relaxed">
           <strong>安全のため</strong>: GitHub REST API で
           <code className="mx-0.5 px-1 rounded bg-[var(--card)]">{FILE_PATH}</code>
-          1 ファイルだけ書き換えます。他のファイルは絶対に変わりません。送信前に現行ファイルの sha を取得し、competing commit があれば 409 で安全に止まります。
+          1 ファイルだけ書き換えます。他のファイルは絶対に変わりません。送信前に現行 sha を取得し、競合があれば 409 で安全に止まります。
         </section>
 
         {result && (
@@ -561,9 +865,7 @@ function CommitFlow({
             }
           >
             <div className="font-bold">
-              {result.ok
-                ? `✓ 送信成功 (${result.commitHash})`
-                : "× エラー"}
+              {result.ok ? `✓ 送信成功 (${result.commitHash})` : "× エラー"}
             </div>
             {result.htmlUrl && (
               <div className="text-[12px]">
@@ -579,6 +881,25 @@ function CommitFlow({
             )}
             {result.error && (
               <div className="text-[12px] whitespace-pre-wrap">{result.error}</div>
+            )}
+            {/* PAT 関連エラー時はウィザードへ誘導 */}
+            {result.errorKind === "auth" && (
+              <button
+                type="button"
+                onClick={onRenewPat}
+                className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              >
+                🔑 新しい PAT を作る
+              </button>
+            )}
+            {result.errorKind === "permission" && (
+              <button
+                type="button"
+                onClick={onRenewPat}
+                className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+              >
+                🔑 PAT を作り直す (権限を確認)
+              </button>
             )}
             {result.logs && result.logs.length > 0 && (
               <details className="text-[11px]">
@@ -628,7 +949,7 @@ function CommitFlow({
   );
 }
 
-/* ----------- 検証 (サーバー側ロジックをクライアントに移植) ----------- */
+/* ----------- 検証 ----------- */
 
 function validateAppData(input: unknown): { ok: true; slidesCount: number } | { ok: false; error: string } {
   if (!input || typeof input !== "object") return { ok: false, error: "appData が object ではありません。" };
