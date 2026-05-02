@@ -141,26 +141,53 @@ function PushModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex"
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
+      // インラインスタイルで viewport 全体を強制占有 (Tailwind の
+      // inset-0 が一部環境で効かないケースの安全策)。
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 60,
+        display: "flex",
+      }}
     >
       {/* Backdrop — viewport 全体。タップで閉じる。 */}
       <button
         type="button"
         aria-label="閉じる"
         onClick={onClose}
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0, 0, 0, 0.55)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+          border: "none",
+          padding: 0,
+          margin: 0,
+        }}
       />
       {/*
-        モーダル本体 — SlideEditor と同じ 「画面右からスライドイン」
-        ドロワー方式。h-full で必ず viewport の高さを取り、内側の
-        flex-col + flex-1 overflow-y-auto で確実にスクロールが動く。
-        max-w を 640px に絞り、デスクトップでは右寄せの細長いパネル、
-        スマホでは全画面表示になる。
+        モーダル本体 — 画面右からのドロワー。inline style で 100vh 強制。
+        中身は header + body (overflow-y-auto) + footer の 3 層。
       */}
-      <aside className="relative ml-auto w-full sm:max-w-[640px] h-full bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col">
+      <aside
+        className="relative w-full sm:max-w-[640px] bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col"
+        style={{
+          marginLeft: "auto",
+          height: "100vh",
+        }}
+      >
         {!hydrated ? (
           <div className="px-5 py-12 text-center text-sm text-[var(--muted)]">
             読み込み中…
@@ -273,7 +300,10 @@ function PatWizard({
         </button>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed">
+      <div
+        className="px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed"
+        style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto" }}
+      >
         {/* Intro */}
         <section className="rounded-lg border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--foreground)] px-4 py-3">
           <h4 className="font-bold text-[var(--info)] mb-1.5">
@@ -822,7 +852,10 @@ function CommitFlow({
         </button>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
+      <div
+        className="px-4 sm:px-5 py-4 space-y-4"
+        style={{ flex: "1 1 0%", minHeight: 0, overflowY: "auto" }}
+      >
         <section>
           <h4 className="text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] mb-1.5">
             編集対象スライド
