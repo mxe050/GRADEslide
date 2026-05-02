@@ -158,21 +158,18 @@ function EditToggle({
           </span>
         )}
       </button>
-      {editMode && (
+      {/* 「GitHub 送信」 / 「JSON」 / 「全破棄」 は **編集モード OFF でも**
+          overlay (= 編集) が存在すれば表示する。編集モード切替後にうっかり
+          ボタンを見失わないように。dev でない時 / overlay が無い時は何も
+          描画しない (DOM 増えない)。 */}
+      {IS_DEV && overlayCount > 0 && <PushToGitHub />}
+      {overlayCount > 0 && (
         <>
-          {/* dev サーバー時のみ「GitHub に送信」 を表示。本番ビルドでは
-              そもそも /api/save-and-push が 403 を返す & ボタンも非表示。 */}
-          {IS_DEV && <PushToGitHub />}
           <button
             type="button"
             onClick={onExport}
-            disabled={overlayCount === 0}
-            title={
-              overlayCount === 0
-                ? "編集が無いのでエクスポートできません"
-                : "編集を反映した slides.json をダウンロード"
-            }
-            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium border border-[var(--card-border)] hover:bg-[var(--card-border)]/60 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="編集を反映した slides.json をダウンロード"
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium border border-[var(--card-border)] hover:bg-[var(--card-border)]/60"
           >
             <span aria-hidden="true">📥</span>
             <span className="hidden sm:inline">JSON</span>
@@ -180,7 +177,6 @@ function EditToggle({
           <button
             type="button"
             onClick={() => {
-              if (overlayCount === 0) return;
               if (
                 window.confirm(
                   `${overlayCount} 件の編集をすべて破棄して元の状態に戻します。よろしいですか？`
@@ -189,9 +185,8 @@ function EditToggle({
                 onClearAll();
               }
             }}
-            disabled={overlayCount === 0}
             title="全ての編集を破棄"
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium border border-[var(--card-border)] text-[var(--bad)] hover:bg-[var(--bad-soft)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium border border-[var(--card-border)] text-[var(--bad)] hover:bg-[var(--bad-soft)]"
           >
             <span aria-hidden="true">🗑</span>
           </button>
