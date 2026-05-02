@@ -386,12 +386,15 @@ function PatWizard({
               </div>
             </li>
             <li>
-              <strong>Permissions → Repository permissions</strong> を開く (▶ をクリック)
+              <strong>Permissions</strong> セクションの右上にある{" "}
+              <strong>「+ Add permissions」</strong> ボタンをクリック
             </li>
             <li>
-              <strong>Contents</strong> の Access を <strong>「Read and write」</strong> に変更
+              開いた選択画面で <strong>「Contents」</strong> を探して選択 →{" "}
+              アクセスを <strong>「Read and write」</strong> に設定して追加
               <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                (他の項目はそのまま「No access」 のままで OK)
+                ※ 「Metadata: Read-only」 が自動で追加されますが、それは正常です (Contents の依存権限)。
+                そのままでも OK で、消せません。
               </p>
             </li>
           </ol>
