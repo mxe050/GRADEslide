@@ -54,6 +54,51 @@ export function SlideEditor({ slide, onClose }: Props) {
     activeRef.current = el;
   };
 
+  // ----- JSON 直接編集 -------------------------------------------------
+  // フォームフィールド ⟷ JSON の双方向同期。JSON が壊れているときは
+  // setDraft しない (ので他のフォームの値が壊れない)。保存ボタンも無効化。
+  const [jsonText, setJsonText] = useState<string>(() =>
+    JSON.stringify(seeded, null, 2)
+  );
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const jsonFocusedRef = useRef(false);
+
+  // draft が変わった (フォームフィールド編集や toolbar) ら、JSON を再生成。
+  // ただしユーザーが JSON テキストエリアを編集中はその文字列を尊重する。
+  useEffect(() => {
+    if (!jsonFocusedRef.current) {
+      setJsonText(JSON.stringify(draft, null, 2));
+    }
+  }, [draft]);
+
+  function applyJsonText(text: string) {
+    setJsonText(text);
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("JSON は object でなければなりません");
+      }
+      const o = parsed as Record<string, unknown>;
+      if (typeof o.title !== "string")
+        throw new Error("title は string でなければなりません");
+      if (typeof o.section !== "string")
+        throw new Error("section は string でなければなりません");
+      if (typeof o.narration !== "string")
+        throw new Error("narration は string でなければなりません");
+      if (!o.visual || typeof o.visual !== "object")
+        throw new Error("visual は object でなければなりません");
+      const v = o.visual as Record<string, unknown>;
+      if (typeof v.type !== "string")
+        throw new Error("visual.type は string でなければなりません");
+      if (!v.data || typeof v.data !== "object")
+        throw new Error("visual.data は object でなければなりません");
+      setDraft(parsed as SlideOverlay);
+      setJsonError(null);
+    } catch (e) {
+      setJsonError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   // Keep activeRef.current's value in sync when the toolbar mutates it.
   // We ask the toolbar to call back here so we re-derive draft state.
   const onToolbarChange = (el: HTMLTextAreaElement) => {
@@ -190,13 +235,50 @@ export function SlideEditor({ slide, onClose }: Props) {
             </div>
             <PreviewBlock label="title" value={draft.title ?? ""} />
             <PreviewBlock label="section" value={draft.section ?? ""} />
-            <details className="text-xs">
-              <summary className="cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)]">
-                JSON を表示
+            <details className="text-xs" open={jsonError !== null}>
+              <summary className="cursor-pointer text-[var(--muted)] hover:text-[var(--foreground)] inline-flex items-center gap-1.5">
+                <span>JSON を直接編集</span>
+                {jsonError ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bad-soft)] text-[var(--bad)] font-bold">
+                    ⚠ エラー中
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--good-soft)] text-[var(--good)] font-bold">
+                    ✓ OK
+                  </span>
+                )}
               </summary>
-              <pre className="mt-2 text-[11px] bg-[var(--card)] border border-[var(--card-border)] rounded-md p-2 overflow-x-auto">
-                {JSON.stringify(draft, null, 2)}
-              </pre>
+              <textarea
+                value={jsonText}
+                onChange={(e) => applyJsonText(e.target.value)}
+                onFocus={() => {
+                  jsonFocusedRef.current = true;
+                }}
+                onBlur={() => {
+                  jsonFocusedRef.current = false;
+                }}
+                spellCheck={false}
+                rows={20}
+                className={
+                  "mt-2 w-full text-[11px] bg-[var(--card)] border rounded-md p-2 font-mono leading-snug whitespace-pre overflow-x-auto resize-y focus:outline-none focus:ring-2 " +
+                  (jsonError
+                    ? "border-[var(--bad)] focus:ring-[var(--bad)]/30"
+                    : "border-[var(--card-border)] focus:ring-[var(--primary)]/30")
+                }
+              />
+              {jsonError ? (
+                <div className="mt-1.5 text-[11px] text-[var(--bad)] bg-[var(--bad-soft)]/40 border border-[var(--bad)]/30 px-2 py-1.5 rounded-md">
+                  ⚠ {jsonError}
+                  <span className="ml-1 text-[var(--muted)]">
+                    — 修正するか、保存ボタンを使わずキャンセルしてください
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-1.5 text-[11px] text-[var(--muted)] leading-snug">
+                  上のフィールドを編集すると JSON が自動更新されます。逆もできます (JSON を直接編集 → 上のフォームに反映)。
+                  <strong className="text-[var(--bad)]"> 構造を壊すと保存できなくなる</strong>ので注意。
+                </div>
+              )}
             </details>
           </Section>
 
@@ -228,7 +310,13 @@ export function SlideEditor({ slide, onClose }: Props) {
           <button
             type="button"
             onClick={handleSave}
-            className="text-sm font-bold px-4 py-1.5 rounded-md bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+            disabled={jsonError !== null}
+            title={
+              jsonError
+                ? `JSON エラー中のため保存できません: ${jsonError}`
+                : "保存"
+            }
+            className="text-sm font-bold px-4 py-1.5 rounded-md bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             保存
           </button>
