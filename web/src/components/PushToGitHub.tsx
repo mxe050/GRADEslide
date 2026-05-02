@@ -141,7 +141,7 @@ function PushModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-6"
+      className="fixed inset-0 z-[60] flex"
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
@@ -154,15 +154,13 @@ function PushModal({
         className="absolute inset-0 bg-black/55 backdrop-blur-sm"
       />
       {/*
-        モーダル本体 — viewport より大きくならないよう max-h を viewport
-        高さに固定。中身は header (固定) + body (スクロール) + footer (固定)
-        の 3 層 flex-col。dvh = dynamic viewport height で iOS/Android の
-        URL バー伸縮にも追従する。
+        モーダル本体 — SlideEditor と同じ 「画面右からスライドイン」
+        ドロワー方式。h-full で必ず viewport の高さを取り、内側の
+        flex-col + flex-1 overflow-y-auto で確実にスクロールが動く。
+        max-w を 640px に絞り、デスクトップでは右寄せの細長いパネル、
+        スマホでは全画面表示になる。
       */}
-      <div
-        className="relative w-full max-w-2xl rounded-2xl bg-[var(--background)] border border-[var(--card-border)] shadow-2xl flex flex-col overflow-hidden"
-        style={{ maxHeight: "calc(100dvh - 1rem)" }}
-      >
+      <aside className="relative ml-auto w-full sm:max-w-[640px] h-full bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col">
         {!hydrated ? (
           <div className="px-5 py-12 text-center text-sm text-[var(--muted)]">
             読み込み中…
@@ -179,7 +177,7 @@ function PushModal({
             onBusyChange={setBusy}
           />
         )}
-      </div>
+      </aside>
     </div>
   );
 }
@@ -262,7 +260,7 @@ function PatWizard({
 
   return (
     <>
-      <header className="shrink-0 bg-[var(--background)] rounded-t-2xl px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
+      <header className="shrink-0 bg-[var(--card)]/80 backdrop-blur px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
         <span className="text-base font-bold">🔑 GitHub PAT のセットアップ</span>
         <span className="ml-auto text-xs text-[var(--muted)]">90 日に 1 回</span>
         <button
@@ -491,7 +489,7 @@ function PatWizard({
         </p>
       </div>
 
-      <footer className="shrink-0 bg-[var(--background)] rounded-b-2xl border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
+      <footer className="shrink-0 bg-[var(--card)]/95 backdrop-blur border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
         <span className="ml-auto" />
         <button
           type="button"
@@ -798,7 +796,7 @@ function CommitFlow({
 
   return (
     <>
-      <header className="shrink-0 bg-[var(--background)] rounded-t-2xl px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
+      <header className="shrink-0 bg-[var(--card)]/80 backdrop-blur px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
         <span className="text-base font-bold">🚀 GitHub に送信</span>
         <span className="text-xs text-[var(--muted)]">
           ({editedSlides.length} 件)
@@ -928,7 +926,7 @@ function CommitFlow({
         )}
       </div>
 
-      <footer className="shrink-0 bg-[var(--background)] rounded-b-2xl border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
+      <footer className="shrink-0 bg-[var(--card)]/95 backdrop-blur border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
         <span className="ml-auto" />
         <button
           type="button"
