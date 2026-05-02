@@ -144,8 +144,9 @@ function PushModal({
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
-      // インラインスタイルで viewport 全体を強制占有 (Tailwind の
-      // inset-0 が一部環境で効かないケースの安全策)。
+      // 圧倒的な z-index で他のすべての sticky / fixed 要素より上に。
+      // NavBar (z-30) / NavFooter (z-30) / EditFAB (z-40) / SlideEditor (z-50)
+      // すべてを覆う。9999 は React Toast 系より上の値 (= 安全側)。
       style={{
         position: "fixed",
         top: 0,
@@ -154,12 +155,11 @@ function PushModal({
         bottom: 0,
         width: "100vw",
         height: "100vh",
-        zIndex: 60,
+        zIndex: 9999,
         display: "flex",
       }}
     >
-      {/* Backdrop — viewport 全体。タップで閉じる。
-          position:fixed で親に依存せずビューポート全体を確実に覆う。 */}
+      {/* Backdrop — viewport 全体。タップで閉じる。 */}
       <button
         type="button"
         aria-label="閉じる"
@@ -178,20 +178,24 @@ function PushModal({
           border: "none",
           padding: 0,
           margin: 0,
-          zIndex: 1,
+          zIndex: 9999,
+          cursor: "pointer",
         }}
       />
       {/*
-        モーダル本体 — 画面右からのドロワー。inline style で 100vh 強制。
-        中身は header + body (overflow-y-auto) + footer の 3 層。
+        モーダル本体 — position:fixed で右端に貼り付け。
+        flex 配置に頼らず top/right/bottom を直接指定して 100vh 確保。
       */}
       <aside
-        className="w-full sm:max-w-[640px] bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col"
+        className="bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col"
         style={{
-          position: "relative",
-          marginLeft: "auto",
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "min(100vw, 640px)",
           height: "100vh",
-          zIndex: 2,
+          zIndex: 10000,
         }}
       >
         {!hydrated ? (
