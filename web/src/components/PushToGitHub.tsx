@@ -141,34 +141,46 @@ function PushModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-6"
+      className="fixed inset-0 z-[60]"
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
     >
+      {/* Backdrop — viewport 全体に固定。タップで閉じる。 */}
       <button
         type="button"
         aria-label="閉じる"
         onClick={onClose}
-        className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/55 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-2xl rounded-2xl bg-[var(--background)] border border-[var(--card-border)] shadow-2xl flex flex-col max-h-[94vh]">
-        {!hydrated ? (
-          <div className="px-5 py-12 text-center text-sm text-[var(--muted)]">
-            読み込み中…
+      {/*
+        スクロールコンテナ — viewport 全体を占有し、内側の min-h-full +
+        flex items-start sm:items-center で、モーダルが viewport より
+        小さければ中央寄せ、大きければ上端から流れて下にスクロール可能。
+        モーダルの header / footer を sticky にして、長いステップでも
+        ✕ や 「保存」 ボタンに常に手が届く。
+      */}
+      <div className="absolute inset-0 overflow-y-auto">
+        <div className="min-h-full flex items-start sm:items-center justify-center p-2 sm:p-6">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-[var(--background)] border border-[var(--card-border)] shadow-2xl flex flex-col my-auto">
+            {!hydrated ? (
+              <div className="px-5 py-12 text-center text-sm text-[var(--muted)]">
+                読み込み中…
+              </div>
+            ) : !pat || forceWizard ? (
+              <PatWizard onSave={savePat} onClose={onClose} />
+            ) : (
+              <CommitFlow
+                pat={pat}
+                overlays={overlays}
+                onClearOverlays={clearAll}
+                onClose={onClose}
+                onRenewPat={clearPat}
+                onBusyChange={setBusy}
+              />
+            )}
           </div>
-        ) : !pat || forceWizard ? (
-          <PatWizard onSave={savePat} onClose={onClose} />
-        ) : (
-          <CommitFlow
-            pat={pat}
-            overlays={overlays}
-            onClearOverlays={clearAll}
-            onClose={onClose}
-            onRenewPat={clearPat}
-            onBusyChange={setBusy}
-          />
-        )}
+        </div>
       </div>
     </div>
   );
@@ -252,7 +264,7 @@ function PatWizard({
 
   return (
     <>
-      <header className="px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
+      <header className="sticky top-0 z-10 bg-[var(--background)] rounded-t-2xl px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
         <span className="text-base font-bold">🔑 GitHub PAT のセットアップ</span>
         <span className="ml-auto text-xs text-[var(--muted)]">90 日に 1 回</span>
         <button
@@ -265,7 +277,7 @@ function PatWizard({
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed">
+      <div className="px-4 sm:px-5 py-4 space-y-4 text-sm leading-relaxed">
         {/* Intro */}
         <section className="rounded-lg border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--foreground)] px-4 py-3">
           <h4 className="font-bold text-[var(--info)] mb-1.5">
@@ -481,7 +493,7 @@ function PatWizard({
         </p>
       </div>
 
-      <footer className="border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
+      <footer className="sticky bottom-0 z-10 bg-[var(--background)] rounded-b-2xl border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
         <span className="ml-auto" />
         <button
           type="button"
@@ -788,7 +800,7 @@ function CommitFlow({
 
   return (
     <>
-      <header className="px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
+      <header className="sticky top-0 z-10 bg-[var(--background)] rounded-t-2xl px-4 sm:px-5 py-3 border-b border-[var(--card-border)] flex items-center gap-2">
         <span className="text-base font-bold">🚀 GitHub に送信</span>
         <span className="text-xs text-[var(--muted)]">
           ({editedSlides.length} 件)
@@ -814,7 +826,7 @@ function CommitFlow({
         </button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-4">
+      <div className="px-4 sm:px-5 py-4 space-y-4">
         <section>
           <h4 className="text-[11px] font-bold tracking-wider uppercase text-[var(--muted)] mb-1.5">
             編集対象スライド
@@ -918,7 +930,7 @@ function CommitFlow({
         )}
       </div>
 
-      <footer className="border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
+      <footer className="sticky bottom-0 z-10 bg-[var(--background)] rounded-b-2xl border-t border-[var(--card-border)] px-4 sm:px-5 py-3 flex items-center gap-2">
         <span className="ml-auto" />
         <button
           type="button"
