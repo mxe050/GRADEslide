@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useEditStore, mergeSlide, hasMeaningfulOverlay } from "@/lib/editStore";
 import { getAllSlides, getAppData } from "@/lib/slides";
 import type { Slide } from "@/lib/types";
@@ -114,9 +115,20 @@ function PushModal({
   const [pat, setPatState] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [forceWizard, setForceWizard] = useState(false);
+  // Portal で document.body にマウントするため、SSR 時 / 初回レンダ時には
+  // null を返す。マウント後に portalTarget を設定して描画開始。
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setPatState(typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) : null);
     setHydrated(true);
+    setPortalTarget(document.body);
+
+    // モーダルを開いている間、ページ本体のスクロールを止める。
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
   }, []);
 
   function savePat(value: string) {
@@ -139,14 +151,16 @@ function PushModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, busy]);
 
-  return (
+  if (!portalTarget) return null;
+
+  const modalNode = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="GitHub に送信"
       // 圧倒的な z-index で他のすべての sticky / fixed 要素より上に。
-      // NavBar (z-30) / NavFooter (z-30) / EditFAB (z-40) / SlideEditor (z-50)
-      // すべてを覆う。9999 は React Toast 系より上の値 (= 安全側)。
+      // Portal で document.body 直下にマウントするので、ページ内の
+      // stacking context (NavBar 等) の影響を受けない。
       style={{
         position: "fixed",
         top: 0,
@@ -217,6 +231,8 @@ function PushModal({
       </aside>
     </div>
   );
+
+  return createPortal(modalNode, portalTarget);
 }
 
 /* ============== PAT セットアップウィザード ============== */
