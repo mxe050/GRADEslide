@@ -158,23 +158,27 @@ function PushModal({
         display: "flex",
       }}
     >
-      {/* Backdrop — viewport 全体。タップで閉じる。 */}
+      {/* Backdrop — viewport 全体。タップで閉じる。
+          position:fixed で親に依存せずビューポート全体を確実に覆う。 */}
       <button
         type="button"
         aria-label="閉じる"
         onClick={onClose}
         style={{
-          position: "absolute",
+          position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
+          width: "100vw",
+          height: "100vh",
           background: "rgba(0, 0, 0, 0.55)",
           backdropFilter: "blur(4px)",
           WebkitBackdropFilter: "blur(4px)",
           border: "none",
           padding: 0,
           margin: 0,
+          zIndex: 1,
         }}
       />
       {/*
@@ -182,10 +186,12 @@ function PushModal({
         中身は header + body (overflow-y-auto) + footer の 3 層。
       */}
       <aside
-        className="relative w-full sm:max-w-[640px] bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col"
+        className="w-full sm:max-w-[640px] bg-[var(--background)] shadow-2xl border-l border-[var(--card-border)] flex flex-col"
         style={{
+          position: "relative",
           marginLeft: "auto",
           height: "100vh",
+          zIndex: 2,
         }}
       >
         {!hydrated ? (
