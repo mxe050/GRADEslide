@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSwipeable } from "react-swipeable";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import type { Slide } from "@/lib/types";
 import { useUIStore } from "@/lib/store";
+import { useEditStore, mergeSlide, hasMeaningfulOverlay } from "@/lib/editStore";
 import { ProgressBar } from "./ProgressBar";
 import { NavBar } from "./NavBar";
 import { NavFooter } from "./NavFooter";
 import { VisualPanel } from "./VisualPanel";
 import { NarrationPanel } from "./NarrationPanel";
 import { TableOfContents } from "./TableOfContents";
+import { SlideEditor } from "./SlideEditor";
 
 const slideTransition = {
   initial: { opacity: 0, y: 8 },
@@ -38,9 +40,25 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
   const setLastSlideId = useUIStore((s) => s.setLastSlideId);
   const togglePresentMode = useUIStore((s) => s.togglePresentMode);
 
+  // Edit-mode state. The merged slide is applied to all rendering so that
+  // user overlays show up identically in view and present modes. The edit
+  // drawer (SlideEditor) operates on the ORIGINAL slide so cancellation is
+  // a true no-op and "破棄" reverts to source.
+  const editMode = useEditStore((s) => s.editMode);
+  const overlay = useEditStore((s) => s.overlays[slide.id]);
+  const merged = mergeSlide(slide, overlay);
+  const dirty = hasMeaningfulOverlay(slide, overlay);
+  const [editorOpen, setEditorOpen] = useState(false);
+
   useEffect(() => {
     setLastSlideId(slide.id);
   }, [slide.id, setLastSlideId]);
+
+  // Close the editor automatically if the user navigates to a different
+  // slide (router.push from keyboard / swipe).
+  useEffect(() => {
+    setEditorOpen(false);
+  }, [slide.id]);
 
   // Broadcast current slide to /notes window (same-origin BroadcastChannel).
   useEffect(() => {
@@ -107,10 +125,10 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
             className="present-stage flex flex-col p-4 sm:p-6 md:p-10 overflow-hidden"
           >
             <div className="flex-1 flex items-center justify-center w-full min-h-0 overflow-hidden">
-              <VisualPanel slide={slide} present />
+              <VisualPanel slide={merged} present />
             </div>
             <div className="flex justify-between items-center text-white/60 text-xs md:text-sm pt-2 md:pt-3 border-t border-white/10 mt-2 md:mt-3">
-              <span className="truncate">{slide.section}</span>
+              <span className="truncate">{merged.section}</span>
               <span className="tabular-nums">
                 {index + 1} / {total}
               </span>
@@ -173,7 +191,7 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
   return (
     <div className={clsx("flex-1 flex flex-col", fontClass)} {...swipe}>
       <ProgressBar current={index + 1} total={total} />
-      <NavBar slide={slide} />
+      <NavBar slide={merged} />
       <AnimatePresence mode="wait" initial={false}>
         <motion.main
           key={slide.id}
@@ -188,18 +206,46 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
               — the primary reading content. */}
           <section className="w-full flex justify-center">
             <div className="reading-stage">
-              <VisualPanel slide={slide} />
+              <VisualPanel slide={merged} />
             </div>
           </section>
           {/* Narration below — comfortable reading width and font size,
               tuned for one-handed thumb scrolling on mobile. */}
           <section className="w-full max-w-3xl mx-auto">
-            <NarrationPanel slide={slide} />
+            <NarrationPanel slide={merged} />
           </section>
         </motion.main>
       </AnimatePresence>
       <NavFooter prevId={prevId} nextId={nextId} index={index} total={total} />
       <TableOfContents />
+      {/* Edit FAB — only rendered when edit mode is on. Layout is unaffected
+          when off (no DOM at all). When on, the floating button sits above
+          the bottom NavFooter and is reachable by the right thumb on mobile. */}
+      {editMode && (
+        <button
+          type="button"
+          onClick={() => setEditorOpen(true)}
+          className={clsx(
+            "fixed z-40 right-3 inline-flex items-center gap-1.5 rounded-full px-4 h-11 text-sm font-bold shadow-lg select-none",
+            "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:scale-[0.97] transition"
+          )}
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 4.5rem)" }}
+          aria-label="このスライドの文字を編集"
+          title="このスライドの文字を編集"
+        >
+          <span aria-hidden="true">✎</span>
+          <span>文字を編集</span>
+          {dirty && (
+            <span
+              className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-[var(--warning-border)]"
+              aria-hidden="true"
+            />
+          )}
+        </button>
+      )}
+      {editorOpen && (
+        <SlideEditor slide={slide} onClose={() => setEditorOpen(false)} />
+      )}
     </div>
   );
 }

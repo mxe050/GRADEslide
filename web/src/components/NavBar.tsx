@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import clsx from "clsx";
 import { useUIStore } from "@/lib/store";
+import { useEditStore, mergeSlide, type SlideOverlay } from "@/lib/editStore";
 import type { Slide } from "@/lib/types";
 import type { ThemeMode } from "@/lib/store";
-import { getFirstSlide, getSlideById } from "@/lib/slides";
+import { getFirstSlide, getSlideById, getAllSlides, getAppData } from "@/lib/slides";
 
 interface Props {
   slide: Slide;
@@ -26,6 +27,11 @@ export function NavBar({ slide }: Props) {
   const { setTocOpen, fontSize, setFontSize, togglePresentMode, theme, setTheme } =
     useUIStore();
   const lastSlideId = useUIStore((s) => s.lastSlideId);
+  const editMode = useEditStore((s) => s.editMode);
+  const toggleEditMode = useEditStore((s) => s.toggleEditMode);
+  const overlays = useEditStore((s) => s.overlays);
+  const clearAll = useEditStore((s) => s.clearAll);
+  const overlayCount = Object.keys(overlays).length;
   const hydrated = useStoreHydrated();
   const firstId = getFirstSlide().id;
 
@@ -78,6 +84,13 @@ export function NavBar({ slide }: Props) {
         <div className="flex items-center gap-1">
           <FontSizeToggle current={fontSize} onChange={setFontSize} />
           <ThemeToggle current={theme} onChange={setTheme} />
+          <EditToggle
+            editMode={editMode}
+            onToggle={toggleEditMode}
+            overlayCount={overlayCount}
+            onExport={() => exportMergedSlidesJson(overlays)}
+            onClearAll={clearAll}
+          />
           <button
             type="button"
             onClick={togglePresentMode}
@@ -90,8 +103,123 @@ export function NavBar({ slide }: Props) {
           </button>
         </div>
       </div>
+      {editMode && (
+        <div className="bg-[var(--primary-soft)]/60 border-b border-[var(--primary-soft)] text-[var(--primary-hover)] text-[11px] md:text-xs px-3 md:px-6 py-1.5 flex items-center gap-2 justify-center">
+          <span aria-hidden="true">✎</span>
+          <span className="font-bold">編集モード</span>
+          <span>右下の 「文字を編集」 ボタンで現在のスライドを編集</span>
+          {overlayCount > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-[var(--primary)] text-white text-[10px] font-bold tabular-nums">
+              {overlayCount} 件編集中
+            </span>
+          )}
+        </div>
+      )}
     </header>
   );
+}
+
+function EditToggle({
+  editMode,
+  onToggle,
+  overlayCount,
+  onExport,
+  onClearAll,
+}: {
+  editMode: boolean;
+  onToggle: () => void;
+  overlayCount: number;
+  onExport: () => void;
+  onClearAll: () => void;
+}) {
+  return (
+    <div className="inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={editMode}
+        title={editMode ? "編集モードを終了" : "編集モードに入る"}
+        aria-label={editMode ? "編集モードを終了" : "編集モードに入る"}
+        className={clsx(
+          "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+          editMode
+            ? "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]"
+            : "hover:bg-[var(--card-border)]/60"
+        )}
+      >
+        <span aria-hidden="true">✎</span>
+        <span className="hidden sm:inline">{editMode ? "編集中" : "編集"}</span>
+        {overlayCount > 0 && !editMode && (
+          <span className="ml-0.5 inline-block min-w-4 h-4 px-1 rounded-full bg-[var(--primary)] text-white text-[10px] leading-4 font-bold tabular-nums">
+            {overlayCount}
+          </span>
+        )}
+      </button>
+      {editMode && (
+        <>
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={overlayCount === 0}
+            title={
+              overlayCount === 0
+                ? "編集が無いのでエクスポートできません"
+                : "編集を反映した slides.json をダウンロード"
+            }
+            className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium border border-[var(--card-border)] hover:bg-[var(--card-border)]/60 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span aria-hidden="true">📥</span>
+            <span className="hidden sm:inline">JSON</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (overlayCount === 0) return;
+              if (
+                window.confirm(
+                  `${overlayCount} 件の編集をすべて破棄して元の状態に戻します。よろしいですか？`
+                )
+              ) {
+                onClearAll();
+              }
+            }}
+            disabled={overlayCount === 0}
+            title="全ての編集を破棄"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm font-medium border border-[var(--card-border)] text-[var(--bad)] hover:bg-[var(--bad-soft)] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span aria-hidden="true">🗑</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Build a merged slides.json from the original AppData + per-slide overlays
+ * and download it. The original public/data/slides.json is not modified —
+ * the user commits the downloaded file manually if they want to persist.
+ */
+function exportMergedSlidesJson(overlays: Record<string, SlideOverlay>) {
+  const app = getAppData();
+  const merged = {
+    ...app,
+    slides: getAllSlides().map((s) => mergeSlide(s, overlays[s.id])),
+  };
+  const json = JSON.stringify(merged, null, 2) + "\n";
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[:T]/g, "-")
+    .slice(0, 16);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `slides.edited.${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function ThemeToggle({
