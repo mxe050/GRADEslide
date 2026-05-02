@@ -23,6 +23,9 @@ export interface TableVisual {
     headers: string[];
     rows: string[][];
     caption?: string;
+    /** すべての行を同じ背景色で描画 (= ストライプを無効化)。
+     *  項目が等価な重み付けのとき使う。 */
+    monochrome?: boolean;
   };
 }
 

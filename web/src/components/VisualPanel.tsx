@@ -272,7 +272,13 @@ function TableR({ data, present }: { data: TableVisual["data"]; present?: boolea
             <tr
               key={ri}
               className={clsx(
-                present
+                // monochrome=true のときはストライプを無効化、全行同じ背景。
+                // 行と行の区切りはセルの border に任せる。
+                data.monochrome
+                  ? present
+                    ? ""
+                    : "bg-[var(--card)]"
+                  : present
                   ? ri % 2 === 1
                     ? "bg-white/5"
                     : ""
