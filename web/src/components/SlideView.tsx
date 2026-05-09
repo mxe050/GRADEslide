@@ -13,6 +13,7 @@ import { NavBar } from "./NavBar";
 import { NavFooter } from "./NavFooter";
 import { VisualPanel } from "./VisualPanel";
 import { NarrationPanel } from "./NarrationPanel";
+import { StudyContext } from "./StudyContext";
 import { TableOfContents } from "./TableOfContents";
 import { SlideEditor } from "./SlideEditor";
 
@@ -48,17 +49,15 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
   const overlay = useEditStore((s) => s.overlays[slide.id]);
   const merged = mergeSlide(slide, overlay);
   const dirty = hasMeaningfulOverlay(slide, overlay);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorState, setEditorState] = useState({
+    open: false,
+    slideId: slide.id,
+  });
+  const editorOpen = editorState.open && editorState.slideId === slide.id;
 
   useEffect(() => {
     setLastSlideId(slide.id);
   }, [slide.id, setLastSlideId]);
-
-  // Close the editor automatically if the user navigates to a different
-  // slide (router.push from keyboard / swipe).
-  useEffect(() => {
-    setEditorOpen(false);
-  }, [slide.id]);
 
   // Broadcast current slide to /notes window (same-origin BroadcastChannel).
   useEffect(() => {
@@ -212,6 +211,9 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
           {/* Narration below — comfortable reading width and font size,
               tuned for one-handed thumb scrolling on mobile. */}
           <section className="w-full max-w-3xl mx-auto">
+            <StudyContext slide={merged} index={index} total={total} />
+          </section>
+          <section className="w-full max-w-3xl mx-auto">
             <NarrationPanel slide={merged} />
           </section>
         </motion.main>
@@ -224,7 +226,7 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
       {editMode && (
         <button
           type="button"
-          onClick={() => setEditorOpen(true)}
+          onClick={() => setEditorState({ open: true, slideId: slide.id })}
           className={clsx(
             "fixed z-40 right-3 inline-flex items-center gap-1.5 rounded-full px-4 h-11 text-sm font-bold shadow-lg select-none",
             "bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] active:scale-[0.97] transition"
@@ -244,7 +246,10 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
         </button>
       )}
       {editorOpen && (
-        <SlideEditor slide={slide} onClose={() => setEditorOpen(false)} />
+        <SlideEditor
+          slide={slide}
+          onClose={() => setEditorState((state) => ({ ...state, open: false }))}
+        />
       )}
     </div>
   );

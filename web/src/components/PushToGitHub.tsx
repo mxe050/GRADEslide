@@ -112,16 +112,18 @@ function PushModal({
   onClose: () => void;
 }) {
   // PAT を localStorage から hydrate
-  const [pat, setPatState] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [pat, setPatState] = useState<string | null>(() =>
+    typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) : null
+  );
+  const [hydrated] = useState(() => typeof window !== "undefined");
   const [forceWizard, setForceWizard] = useState(false);
   // Portal で document.body にマウントするため、SSR 時 / 初回レンダ時には
   // null を返す。マウント後に portalTarget を設定して描画開始。
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [portalTarget] = useState<HTMLElement | null>(() =>
+    typeof document !== "undefined" ? document.body : null
+  );
   useEffect(() => {
-    setPatState(typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) : null);
-    setHydrated(true);
-    setPortalTarget(document.body);
+    if (!portalTarget) return;
 
     // モーダルを開いている間、ページ本体のスクロールを止める。
     const prevOverflow = document.body.style.overflow;
@@ -129,7 +131,7 @@ function PushModal({
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, []);
+  }, [portalTarget]);
 
   function savePat(value: string) {
     if (typeof window !== "undefined") localStorage.setItem(PAT_KEY, value);

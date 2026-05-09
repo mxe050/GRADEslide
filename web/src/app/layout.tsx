@@ -1,14 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { ThemeSync } from "@/components/ThemeSync";
-
-const notoJP = Noto_Sans_JP({
-  variable: "--font-noto-jp",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "診療ガイドライン × GRADE 学習アプリ",
@@ -31,7 +23,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ja" className={`${notoJP.variable} h-full antialiased`}>
+    <html lang="ja" className="h-full antialiased">
       <head>
         <script dangerouslySetInnerHTML={{ __html: preHydrationScript }} />
       </head>

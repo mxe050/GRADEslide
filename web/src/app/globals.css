@@ -5,6 +5,7 @@
    ========================================================================= */
 
 :root {
+  --font-noto-jp: "Noto Sans JP";
   --background: #f5f7fb;
   --foreground: #0b1830;
   --primary: #1d4ed8;          /* indigo/blue 700 */
@@ -261,7 +262,7 @@ html, body {
   font-size: calc(clamp(1.05rem, 4.0cqw, 2.7rem) * var(--stage-scale, 1));
   line-height: 1.25;
   font-weight: 800;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   color: var(--slide-title-fg);
 }
 .reading-stage .stage-heading {
@@ -304,7 +305,7 @@ html, body {
   font-size: clamp(1.6rem, 5.5cqw, 4rem);
   line-height: 1.2;
   font-weight: 800;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
 }
 .present-stage .stage-heading {
   font-size: clamp(1.3rem, 4.2cqw, 3rem);
@@ -351,7 +352,7 @@ html, body {
   display: inline-block;
   font-size: 0.7em;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   margin-bottom: 0.5em;
 }
 
@@ -425,6 +426,86 @@ html, body {
 }
 
 /* =========================================================================
+   Study context — a compact map before the long-form explanation.
+   ========================================================================= */
+.study-context {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-block: 1px solid var(--card-border);
+  border-left: 4px solid var(--primary);
+  background: color-mix(in srgb, var(--primary-soft) 35%, transparent);
+}
+
+.study-context-main {
+  min-width: 0;
+}
+
+.study-context-kicker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.study-context-title {
+  margin-top: 0.3rem;
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.study-context-sub {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.study-context-path {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.study-context-chip {
+  min-width: 0;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  background: var(--card);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.study-context-chip.is-active {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--card-border));
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary-soft) 65%, var(--card));
+}
+
+@media (min-width: 768px) {
+  .study-context {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.7fr);
+    align-items: center;
+    padding: 0.95rem 1.2rem;
+  }
+}
+
+/* =========================================================================
    Narration body — mobile-first long-form reading.
    Tuned for one-handed scrolling on a phone (thumb-reachable bottom nav,
    comfortable line-height for Japanese, generous breathing room for HR
@@ -434,7 +515,7 @@ html, body {
   word-break: break-word;
   overflow-wrap: anywhere;
   line-height: 1.9;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .narration-body > :first-child { margin-top: 0; }

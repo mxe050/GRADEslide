@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Historical one-off migration scripts. Keep lint focused on the app and
+    // maintained utility scripts such as validate-slides.mjs.
+    "scripts/step*.mjs",
+    "scripts/step*.cjs",
   ]),
 ]);
 
