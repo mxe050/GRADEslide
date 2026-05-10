@@ -499,9 +499,110 @@ html, body {
 
 @media (min-width: 768px) {
   .study-context {
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.7fr);
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.72fr);
     align-items: center;
     padding: 0.95rem 1.2rem;
+  }
+  .study-context .g-sensei-guide {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================================
+   G-sensei guide — character support without covering text.
+   All layouts are normal document flow: no absolute/floating overlays.
+   ========================================================================= */
+.g-sensei-guide {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.g-sensei-guide--context {
+  border-top: 1px dashed color-mix(in srgb, var(--card-strong-border) 70%, transparent);
+  padding-top: 0.7rem;
+}
+
+.g-sensei-guide--narration {
+  border-left: 4px solid var(--info-border);
+  background: color-mix(in srgb, var(--info-soft) 45%, var(--card));
+  padding: 0.75rem 0.85rem;
+}
+
+.g-sensei-portrait {
+  width: clamp(3.5rem, 18vw, 7.25rem);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  align-self: end;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+}
+
+.g-sensei-guide--context .g-sensei-portrait {
+  width: clamp(3.25rem, 16vw, 5.4rem);
+}
+
+.g-sensei-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.g-sensei-copy {
+  min-width: 0;
+}
+
+.g-sensei-label {
+  color: var(--info);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.g-sensei-message {
+  margin: 0.18rem 0 0;
+  color: var(--foreground);
+  font-size: 0.93rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.g-sensei-points {
+  margin: 0.45rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.g-sensei-points li {
+  margin: 0.18rem 0;
+}
+
+@media (max-width: 420px) {
+  .g-sensei-guide {
+    gap: 0.55rem;
+  }
+  .g-sensei-guide--narration {
+    padding: 0.65rem 0.7rem;
+  }
+  .g-sensei-portrait {
+    width: 3.65rem;
+  }
+  .g-sensei-guide--context .g-sensei-portrait {
+    width: 3.35rem;
+  }
+  .g-sensei-message {
+    font-size: 0.88rem;
+  }
+  .g-sensei-points {
+    font-size: 0.82rem;
+    line-height: 1.55;
   }
 }
 

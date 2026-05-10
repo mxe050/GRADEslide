@@ -3,6 +3,7 @@
 import clsx from "clsx";
 import type { Slide } from "@/lib/types";
 import { getAllSlides, getAppData } from "@/lib/slides";
+import { GSenseiGuide } from "./GSenseiGuide";
 
 interface Props {
   slide: Slide;
@@ -63,6 +64,7 @@ export function StudyContext({ slide, index, total }: Props) {
           </li>
         ))}
       </ol>
+      <GSenseiGuide slide={slide} variant="context" />
     </aside>
   );
 }
