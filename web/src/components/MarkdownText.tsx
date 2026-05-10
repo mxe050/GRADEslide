@@ -112,17 +112,17 @@ export function MarkdownText({ text, className, inlineOnly, gSenseiImageSrc }: P
           hasDecoratedGSensei = true;
           return (
             <p className="g-sensei-inline">
+              <span className="g-sensei-inline-name">{children}</span>
               <span className="g-sensei-inline-portrait" aria-hidden="true">
                 <Image
                   src={gSenseiImageSrc}
                   alt=""
                   width={344}
                   height={437}
-                  sizes="72px"
+                  sizes="80px"
                   className="g-sensei-inline-image"
                 />
               </span>
-              <span className="g-sensei-inline-name">{children}</span>
             </p>
           );
         },

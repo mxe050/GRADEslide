@@ -4,7 +4,7 @@ import clsx from "clsx";
 import type { Citation, Slide } from "@/lib/types";
 import { getAllSlides, getAppData } from "@/lib/slides";
 import { MarkdownText } from "./MarkdownText";
-import { GSenseiGuide, getGSenseiPose } from "./GSenseiGuide";
+import { GSenseiGuide, getGSenseiInlinePose } from "./GSenseiGuide";
 
 interface Props {
   slide: Slide;
@@ -14,7 +14,7 @@ export function NarrationPanel({ slide }: Props) {
   const slides = getAllSlides();
   const isFinalSlide = slide.id === slides[slides.length - 1]?.id;
   const cites: Citation[] = isFinalSlide ? Object.values(getAppData().citations) : [];
-  const gSenseiImageSrc = `/images/g-sensei/${getGSenseiPose(slide, "narration")}.jpg`;
+  const gSenseiImageSrc = `/images/g-sensei/${getGSenseiInlinePose(slide)}.jpg`;
 
   return (
     <div className="fade-in flex flex-col gap-3 md:gap-5 rounded-xl md:rounded-2xl bg-[var(--card)] border border-[var(--card-border)] px-4 py-4 md:px-7 md:py-7 shadow-sm">

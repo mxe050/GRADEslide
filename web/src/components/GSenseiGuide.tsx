@@ -138,3 +138,9 @@ export function getGSenseiPose(slide: Slide, variant: Variant): (typeof poses)[n
   const offset = slide.visual.type === "table" ? 1 : slide.visual.type === "comparison" ? 4 : 0;
   return poses[(slide.order + offset) % poses.length];
 }
+
+export function getGSenseiInlinePose(slide: Slide): (typeof poses)[number] {
+  const guidePose = getGSenseiPose(slide, "narration");
+  const guideIndex = poses.indexOf(guidePose);
+  return poses[(guideIndex + 3) % poses.length];
+}
