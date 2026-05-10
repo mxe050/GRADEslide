@@ -42,6 +42,25 @@ const termTips: Array<[RegExp, string]> = [
   [/ガイドライン|CPG/, "ガイドラインは集団への文書、EBMは目の前の患者への適用です。"],
 ];
 
+const episodeTips: Array<[RegExp, string]> = [
+  [
+    /患者|個別|ベッドサイド|臨床現場/,
+    "Guyatt先生のEBMの出発点は、教室の批判的吟味を患者さんのそばへ持ち込むことでした。目の前の患者の問題から読み始めます。",
+  ],
+  [
+    /検索|PubMed|AI|文献|情報/,
+    "初期のEBMでは文献を探すだけでも大仕事でした。今は速く探せる分、最後は一次資料に戻って自分で吟味します。",
+  ],
+  [
+    /SR|システマティックレビュー|メタ解析|メタ分析/,
+    "Guyatt先生の話で大事なのは、EBMはSRそのものではなく、患者の問題に最良の根拠を使う姿勢だという点です。",
+  ],
+  [
+    /ガイドライン|CPG|推奨|認証|教育/,
+    "EBMが広がった背景には、医療者が文献を読めることを教育で求める流れがありました。ガイドラインも透明性で読みます。",
+  ],
+];
+
 const poses = [
   "point-up",
   "clipboard",
@@ -55,7 +74,7 @@ const poses = [
 
 export function GSenseiGuide({ slide, variant }: Props) {
   const guide = buildGuide(slide);
-  const pose = selectPose(slide, variant);
+  const pose = getGSenseiPose(slide, variant);
   const size = variant === "context" ? 86 : 116;
 
   return (
@@ -97,6 +116,7 @@ function buildGuide(slide: Slide): { message: string; points: string[] } {
   const haystack = `${slide.title}\n${slide.section}\n${slide.narration}`;
   const sectionTip = sectionTips[slide.section] ?? "このスライドの主張を、根拠・効果・確実性に分けて読みます。";
   const termTip =
+    episodeTips.find(([pattern]) => pattern.test(haystack))?.[1] ??
     termTips.find(([pattern]) => pattern.test(haystack))?.[1] ??
     "まず結論を急がず、「何を根拠にそう言えるのか」を確認します。";
   const visualTip =
@@ -108,7 +128,7 @@ function buildGuide(slide: Slide): { message: string; points: string[] } {
   };
 }
 
-function selectPose(slide: Slide, variant: Variant): (typeof poses)[number] {
+export function getGSenseiPose(slide: Slide, variant: Variant): (typeof poses)[number] {
   if (variant === "context") {
     if (slide.visual.type === "slideImage") return "clipboard";
     if (slide.visual.type === "comparison" || slide.visual.type === "imageComparison") return "point-side";

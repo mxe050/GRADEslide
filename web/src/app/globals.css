@@ -503,9 +503,6 @@ html, body {
     align-items: center;
     padding: 0.95rem 1.2rem;
   }
-  .study-context .g-sensei-guide {
-    grid-column: 1 / -1;
-  }
 }
 
 /* =========================================================================
@@ -584,6 +581,41 @@ html, body {
   margin: 0.18rem 0;
 }
 
+.g-sensei-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  margin: 0.9em 0 0.55em;
+  padding: 0.45rem 0.6rem;
+  border-left: 4px solid var(--primary);
+  background: color-mix(in srgb, var(--primary-soft) 30%, transparent);
+}
+
+.g-sensei-inline-portrait {
+  width: clamp(3.4rem, 15vw, 4.8rem);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+}
+
+.g-sensei-inline-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.g-sensei-inline-name {
+  min-width: 0;
+  color: var(--primary);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 @media (max-width: 420px) {
   .g-sensei-guide {
     gap: 0.55rem;
@@ -603,6 +635,13 @@ html, body {
   .g-sensei-points {
     font-size: 0.82rem;
     line-height: 1.55;
+  }
+  .g-sensei-inline {
+    gap: 0.55rem;
+    padding: 0.4rem 0.5rem;
+  }
+  .g-sensei-inline-portrait {
+    width: 3.2rem;
   }
 }
 

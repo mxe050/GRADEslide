@@ -2,18 +2,20 @@
 
 import clsx from "clsx";
 import type { Citation, Slide } from "@/lib/types";
-import { getCitation } from "@/lib/slides";
+import { getAllSlides, getAppData } from "@/lib/slides";
 import { MarkdownText } from "./MarkdownText";
-import { GSenseiGuide } from "./GSenseiGuide";
+import { GSenseiGuide, getGSenseiPose } from "./GSenseiGuide";
 
 interface Props {
   slide: Slide;
 }
 
 export function NarrationPanel({ slide }: Props) {
-  const cites: Citation[] = (slide.citationIds ?? [])
-    .map((id) => getCitation(id))
-    .filter((c): c is Citation => Boolean(c));
+  const slides = getAllSlides();
+  const isFinalSlide = slide.id === slides[slides.length - 1]?.id;
+  const cites: Citation[] = isFinalSlide ? Object.values(getAppData().citations) : [];
+  const gSenseiImageSrc = `/images/g-sensei/${getGSenseiPose(slide, "narration")}.jpg`;
+
   return (
     <div className="fade-in flex flex-col gap-3 md:gap-5 rounded-xl md:rounded-2xl bg-[var(--card)] border border-[var(--card-border)] px-4 py-4 md:px-7 md:py-7 shadow-sm">
       <div className="flex items-center justify-between">
@@ -39,14 +41,17 @@ export function NarrationPanel({ slide }: Props) {
       <GSenseiGuide slide={slide} variant="narration" />
 
       <div className="narration-body text-[16.5px] md:text-lg text-[var(--foreground)]">
-        <MarkdownText text={slide.narration} />
+        <MarkdownText text={slide.narration} gSenseiImageSrc={gSenseiImageSrc} />
       </div>
 
       {cites.length > 0 && (
         <section className="mt-3 pt-4 border-t border-[var(--card-border)]">
           <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-3">
-            参考文献
+            参考文献一覧
           </h3>
+          <p className="mb-3 text-sm md:text-base text-[var(--muted)] leading-relaxed">
+            各ページの末尾には出さず、この最後のページにまとめています。
+          </p>
           <ol className="list-decimal pl-6 space-y-2 text-sm md:text-base text-[var(--muted)] leading-relaxed">
             {cites.map((c) => (
               <li key={c.id} id={`ref-${c.id}`}>

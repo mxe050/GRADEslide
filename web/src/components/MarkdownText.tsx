@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import clsx from "clsx";
 
@@ -8,6 +10,7 @@ interface Props {
   text: string;
   className?: string;
   inlineOnly?: boolean;
+  gSenseiImageSrc?: string;
 }
 
 type MdNode = {
@@ -67,10 +70,18 @@ function splitMarkText(value: string): MdNode[] {
   return parts.length > 0 ? parts : [{ type: "text", value }];
 }
 
+function getNodeText(node: unknown): string {
+  const current = node as MdNode | undefined;
+  if (!current) return "";
+  if (typeof current.value === "string") return current.value;
+  if (!Array.isArray(current.children)) return "";
+  return current.children.map((child) => getNodeText(child)).join("");
+}
+
 // Plain markdown renderer. Glossary term popups have been intentionally
 // removed — they were noisy on mobile and the per-term hint duplicates the
 // dialogue-style narration that explains terms in context.
-export function MarkdownText({ text, className, inlineOnly }: Props) {
+export function MarkdownText({ text, className, inlineOnly, gSenseiImageSrc }: Props) {
   if (inlineOnly) {
     return (
       <span className={clsx("markdown-body", className)}>
@@ -85,9 +96,44 @@ export function MarkdownText({ text, className, inlineOnly }: Props) {
       </span>
     );
   }
+
+  let hasDecoratedGSensei = false;
+  const components: Components | undefined = gSenseiImageSrc
+    ? {
+        p: ({ node, children }) => {
+          const paragraphText = getNodeText(node).trim();
+          const shouldDecorate =
+            !hasDecoratedGSensei && /^G先生(?:\s|$|—|より)/.test(paragraphText);
+
+          if (!shouldDecorate) {
+            return <p>{children}</p>;
+          }
+
+          hasDecoratedGSensei = true;
+          return (
+            <p className="g-sensei-inline">
+              <span className="g-sensei-inline-portrait" aria-hidden="true">
+                <Image
+                  src={gSenseiImageSrc}
+                  alt=""
+                  width={344}
+                  height={437}
+                  sizes="72px"
+                  className="g-sensei-inline-image"
+                />
+              </span>
+              <span className="g-sensei-inline-name">{children}</span>
+            </p>
+          );
+        },
+      }
+    : undefined;
+
   return (
     <div className={clsx("markdown-body", className)}>
-      <ReactMarkdown remarkPlugins={remarkPlugins}>{text}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={remarkPlugins} components={components}>
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }

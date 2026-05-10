@@ -37,6 +37,12 @@
       "label": "Users' Guides to the Medical Literature, 3rd Ed. (2015)",
       "source": "Guyatt GH, Rennie D, Meade MO, Cook DJ, eds. Users' Guides to the Medical Literature: A Manual for Evidence-Based Clinical Practice. 3rd ed. New York: McGraw-Hill; 2015."
     },
+    "guyattOralHistory": {
+      "id": "guyattOralHistory",
+      "label": "Professor Gordon Guyatt — Story of Evidence-Based Medicine",
+      "source": "Episode 3. Professor Gordon Guyatt - Story of Evidence-Based Medicine. Oral History of Evidence-Based Medicine and Evidence Synthesis.",
+      "url": "https://www.youtube.com/watch?v=KtwqZJqHARM"
+    },
     "iom2011": {
       "id": "iom2011",
       "label": "IOM (HMD) 2011 — Clinical Practice Guidelines We Can Trust",
