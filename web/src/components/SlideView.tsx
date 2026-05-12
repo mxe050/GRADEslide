@@ -16,6 +16,11 @@ import { NarrationPanel } from "./NarrationPanel";
 import { StudyContext } from "./StudyContext";
 import { TableOfContents } from "./TableOfContents";
 import { SlideEditor } from "./SlideEditor";
+import {
+  EbmGradeMapCover,
+  EbmGradeMapExcerpt,
+  isEbmGradeMapCoverSlide,
+} from "./EbmGradeMap";
 
 const slideTransition = {
   initial: { opacity: 0, y: 8 },
@@ -48,6 +53,7 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
   const editMode = useEditStore((s) => s.editMode);
   const overlay = useEditStore((s) => s.overlays[slide.id]);
   const merged = mergeSlide(slide, overlay);
+  const isMapCover = isEbmGradeMapCoverSlide(merged.id);
   const dirty = hasMeaningfulOverlay(slide, overlay);
   const [editorState, setEditorState] = useState({
     open: false,
@@ -203,11 +209,16 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
               On narrow phones the visual stays compact (~16:9 of viewport
               width) so most of the screen below is dedicated to the narration
               — the primary reading content. */}
-          <section className="reading-column w-full">
-            <div className="reading-stage">
-              <VisualPanel slide={merged} />
-            </div>
-          </section>
+          {isMapCover ? (
+            <EbmGradeMapCover />
+          ) : (
+            <section className="reading-column w-full">
+              <div className="reading-stage">
+                <VisualPanel slide={merged} />
+              </div>
+            </section>
+          )}
+          {!isMapCover && <EbmGradeMapExcerpt slideId={merged.id} />}
           {/* Narration below — comfortable reading width and font size,
               tuned for one-handed thumb scrolling on mobile. */}
           <section className="reading-column w-full">
