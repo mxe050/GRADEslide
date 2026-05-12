@@ -191,6 +191,8 @@ function SlideImageR({
 }
 
 function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean }) {
+  const hasBullets = Boolean(data.bullets && data.bullets.length > 0);
+  const focusCard = !hasBullets && Boolean(data.heading || data.body);
   const accentClass =
     data.accent === "warning"
       ? "border-l-[6px] border-[var(--warning-border)] bg-[var(--warning-bg)]/60 pl-3"
@@ -206,7 +208,8 @@ function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean 
   return (
     <div
       className={clsx(
-        "flex-1 flex flex-col gap-3 rounded-xl",
+        "stage-card flex-1 flex flex-col gap-3 rounded-xl",
+        focusCard && "stage-card--focus",
         accentClass
       )}
     >
@@ -225,7 +228,7 @@ function CardR({ data, present }: { data: CardVisual["data"]; present?: boolean 
           <MarkdownText text={data.body} />
         </div>
       )}
-      {data.bullets && data.bullets.length > 0 && (
+      {hasBullets && data.bullets && (
         <ul
           className={clsx(
             "stage-bullet list-disc pl-[1.4em] space-y-[0.5em] flex-1 min-h-0",

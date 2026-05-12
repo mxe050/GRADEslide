@@ -203,17 +203,17 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
               On narrow phones the visual stays compact (~16:9 of viewport
               width) so most of the screen below is dedicated to the narration
               — the primary reading content. */}
-          <section className="w-full flex justify-center">
+          <section className="reading-column w-full">
             <div className="reading-stage">
               <VisualPanel slide={merged} />
             </div>
           </section>
           {/* Narration below — comfortable reading width and font size,
               tuned for one-handed thumb scrolling on mobile. */}
-          <section className="w-full max-w-3xl mx-auto">
+          <section className="reading-column w-full">
             <StudyContext slide={merged} index={index} total={total} />
           </section>
-          <section className="w-full max-w-3xl mx-auto">
+          <section className="reading-column w-full">
             <NarrationPanel slide={merged} />
           </section>
         </motion.main>

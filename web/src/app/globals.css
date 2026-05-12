@@ -207,6 +207,15 @@ html, body {
 }
 
 /* =========================================================================
+   Reading column — keeps the visual slide, current-location strip, and
+   long-form explanation aligned as one composed desktop reading surface.
+   ========================================================================= */
+.reading-column {
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+/* =========================================================================
    Present mode 16:9 stage
    ========================================================================= */
 .present-stage {
@@ -227,7 +236,7 @@ html, body {
    ========================================================================= */
 .reading-stage {
   width: 100%;
-  max-width: 1280px;
+  max-width: 48rem;
   /* Mobile-first: minimum 16:9 shape, can grow when content overflows */
   min-height: calc(56.25vw);
   border-radius: 18px;
@@ -298,6 +307,25 @@ html, body {
 }
 .reading-stage .stage-inner {
   padding: clamp(0.7rem, 2.6cqw, 1.6rem);
+}
+
+.reading-stage .stage-card {
+  padding: clamp(0.75rem, 2.2cqw, 1.35rem);
+}
+
+.reading-stage .stage-card--focus {
+  justify-content: center;
+  min-height: 0;
+  padding: clamp(1rem, 3.2cqw, 2rem);
+}
+
+.reading-stage .stage-card--focus .stage-heading {
+  font-size: calc(clamp(1.05rem, 3.8cqw, 2rem) * var(--stage-scale, 1));
+}
+
+.reading-stage .stage-card--focus .stage-body {
+  font-size: calc(clamp(0.95rem, 2.85cqw, 1.35rem) * var(--stage-scale, 1));
+  max-width: 42em;
 }
 
 /* Present mode stage — same container-query rules, scale 1.0 forced larger */
