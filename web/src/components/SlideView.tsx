@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSwipeable } from "react-swipeable";
+import type { SwipeEventData } from "react-swipeable";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import type { Slide } from "@/lib/types";
@@ -28,6 +29,9 @@ const slideTransition = {
   exit: { opacity: 0, y: -8 },
   transition: { duration: 0.18, ease: "easeOut" as const },
 };
+
+const SLIDE_SWIPE_MIN_X = 96;
+const SLIDE_SWIPE_HORIZONTAL_RATIO = 1.7;
 
 interface Props {
   slide: Slide;
@@ -106,12 +110,22 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [router, prevId, nextId, tocOpen, setTocOpen, togglePresentMode, presentMode]);
 
+  function navigateBySwipe({ absX, absY, dir }: SwipeEventData) {
+    if (tocOpen) return;
+    if (absX < SLIDE_SWIPE_MIN_X || absX < absY * SLIDE_SWIPE_HORIZONTAL_RATIO) return;
+
+    if (dir === "Left" && nextId) {
+      router.push(`/slide/${nextId}`);
+    } else if (dir === "Right" && prevId) {
+      router.push(`/slide/${prevId}`);
+    }
+  }
+
   const swipe = useSwipeable({
-    onSwipedLeft: () => nextId && router.push(`/slide/${nextId}`),
-    onSwipedRight: () => prevId && router.push(`/slide/${prevId}`),
+    onSwiped: navigateBySwipe,
     trackMouse: false,
     preventScrollOnSwipe: false,
-    delta: 50,
+    delta: { left: 80, right: 80, up: 999, down: 999 },
   });
 
   const fontClass =
