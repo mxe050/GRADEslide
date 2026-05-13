@@ -21,7 +21,6 @@ import {
   EbmGradeMapExcerpt,
   isEbmGradeMapCoverSlide,
 } from "./EbmGradeMap";
-import { EbmReadingDiagram } from "./EbmReadingDiagram";
 
 const slideTransition = {
   initial: { opacity: 0, y: 8 },
@@ -233,7 +232,6 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
             </section>
           )}
           {!isMapCover && <EbmGradeMapExcerpt slideId={merged.id} />}
-          {!isMapCover && <EbmReadingDiagram slideId={merged.id} />}
           <section className="reading-column w-full">
             <NarrationPanel slide={merged} />
           </section>
