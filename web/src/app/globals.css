@@ -731,6 +731,30 @@ html, body {
 }
 .narration-body blockquote p { margin: 0.35em 0; }
 
+.narration-body img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 1.05em auto 0.35em;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: white;
+  box-shadow: 0 16px 40px -30px rgb(15 23 42 / 0.36);
+}
+
+.narration-body p:has(> img:only-child) {
+  margin: 1.15em 0 0.25em;
+}
+
+.narration-body p:has(> img:only-child) + p em {
+  display: block;
+  margin-top: 0.25em;
+  color: var(--muted);
+  font-size: 0.9em;
+  line-height: 1.65;
+}
+
 .narration-body hr {
   border: 0;
   border-top: 1px dashed var(--card-strong-border);
