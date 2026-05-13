@@ -293,7 +293,7 @@ export function EbmGradeMapExcerpt({ slideId }: { slideId: string }) {
             alt={excerpt.alt}
             width={excerpt.width}
             height={excerpt.height}
-            sizes="(min-width: 768px) 48rem, 130vw"
+            sizes="(min-width: 768px) 48rem, calc(100vw - 3rem)"
             className="ebm-map-excerpt-image"
           />
         </div>

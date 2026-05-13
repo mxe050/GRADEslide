@@ -359,8 +359,7 @@ html, body {
 }
 
 .ebm-map-excerpt-scroll {
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
+  overflow: hidden;
   border: 1px solid var(--card-border);
   border-radius: 10px;
   background: white;
@@ -369,14 +368,9 @@ html, body {
 .ebm-map-excerpt-image {
   display: block;
   width: 100%;
-  min-width: min(38rem, 145vw);
+  max-width: 100%;
+  min-width: 0;
   height: auto;
-}
-
-@media (min-width: 768px) {
-  .ebm-map-excerpt-image {
-    min-width: 0;
-  }
 }
 
 /* =========================================================================
