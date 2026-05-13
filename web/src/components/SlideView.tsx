@@ -14,7 +14,6 @@ import { NavBar } from "./NavBar";
 import { NavFooter } from "./NavFooter";
 import { VisualPanel } from "./VisualPanel";
 import { NarrationPanel } from "./NarrationPanel";
-import { StudyContext } from "./StudyContext";
 import { TableOfContents } from "./TableOfContents";
 import { SlideEditor } from "./SlideEditor";
 import {
@@ -22,6 +21,7 @@ import {
   EbmGradeMapExcerpt,
   isEbmGradeMapCoverSlide,
 } from "./EbmGradeMap";
+import { EbmReadingDiagram } from "./EbmReadingDiagram";
 
 const slideTransition = {
   initial: { opacity: 0, y: 8 },
@@ -233,11 +233,7 @@ export function SlideView({ slide, prevId, nextId, index, total }: Props) {
             </section>
           )}
           {!isMapCover && <EbmGradeMapExcerpt slideId={merged.id} />}
-          {/* Narration below — comfortable reading width and font size,
-              tuned for one-handed thumb scrolling on mobile. */}
-          <section className="reading-column w-full">
-            <StudyContext slide={merged} index={index} total={total} />
-          </section>
+          {!isMapCover && <EbmReadingDiagram slideId={merged.id} />}
           <section className="reading-column w-full">
             <NarrationPanel slide={merged} />
           </section>

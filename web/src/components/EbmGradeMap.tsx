@@ -121,9 +121,9 @@ const topicLinks = [
 const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   {
     slideIds: ["N3"],
-    eyebrow: "全体地図",
-    title: "EBMとGRADEは、同じ流れの上にある",
-    body: "このアプリ全体の骨格です。批判的吟味で根拠を読み、GRADEで確実性と推奨を透明に整理します。",
+    eyebrow: "EBMの全体地図",
+    title: "EBMは、情報を患者の判断へ翻訳する流れ",
+    body: "このアプリ全体の骨格です。GRADEは主役ではなく、信頼できる情報や推奨をEBMとして読むための補助線として使います。",
     src: "/images/ebm-grade-map/top-message.png",
     alt: "EBMとGRADEは同じ流れにあることを示すポスター上部",
     width: 930,
@@ -131,9 +131,9 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   },
   {
     slideIds: ["N1", "S10"],
-    eyebrow: "発展の流れ",
-    title: "経験・権威から、SR、GRADE、Core GRADEへ",
-    body: "A薬の主張を読むときも、この流れで位置づけます。ラベルではなく、根拠の集め方と確実性を見ます。",
+    eyebrow: "EBMの発展",
+    title: "経験・権威から、系統的に読むEBMへ",
+    body: "A薬の主張を読むときも、この流れで位置づけます。ラベルではなく、問い、集め方、患者アウトカム、確実性を見ます。",
     src: "/images/ebm-grade-map/development-flow.png",
     alt: "EBM以前から批判的吟味、SR、EBMの意思決定、GRADE、Core GRADEへ進む流れ",
     width: 933,
@@ -141,9 +141,9 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   },
   {
     slideIds: ["S8", "S106"],
-    eyebrow: "対応関係",
-    title: "EBMの5ステップは、Core GRADEの作業に対応する",
-    body: "AskからAssessまでを、臨床疑問、アウトカム、批判的吟味、EtD、振り返りに対応させて眺めます。",
+    eyebrow: "EBMの5ステップ",
+    title: "AskからAssessまでを、読む順番にする",
+    body: "Core GRADEの作業は、EBMの5ステップを推奨作成に拡張したものです。読み手は、どの段階の判断かを見れば迷いにくくなります。",
     src: "/images/ebm-grade-map/steps-core-grade.png",
     alt: "EBMの5ステップとCore GRADEの対応関係",
     width: 930,
@@ -172,8 +172,8 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   {
     slideIds: ["S27", "S64"],
     eyebrow: "Step 3",
-    title: "確実性は、下げる理由と上げる理由を明示する",
-    body: "Risk of Bias、Inconsistency、Indirectness、Imprecision、Publication biasを、アウトカムごとに点検します。",
+    title: "確実性は、読み手が推定値を信じるための情報",
+    body: "Risk of Bias、Inconsistency、Indirectness、Imprecision、Publication biasは、推奨作成者だけでなく、情報の読み手にも必要な点検項目です。",
     src: "/images/ebm-grade-map/certainty.png",
     alt: "GRADEの確実性評価とグレードダウン、アップグレード要因",
     width: 408,
@@ -192,8 +192,8 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   {
     slideIds: ["S68", "S95"],
     eyebrow: "Step 4",
-    title: "EtDで、エビデンスから推奨への理由を残す",
-    body: "利益・害、確実性、価値観、資源、公平性、実行可能性を同じ枠で議論し、判断の道筋を追跡可能にします。",
+    title: "EtDは、推奨を読むための理由の地図",
+    body: "利益・害、確実性、価値観、資源、公平性、実行可能性を読めると、その推奨をどの患者にどう使うべきかが見えます。",
     src: "/images/ebm-grade-map/etd.png",
     alt: "Evidence to DecisionのCore項目とOption項目",
     width: 637,
@@ -202,8 +202,8 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   {
     slideIds: ["S65"],
     eyebrow: "Step 5",
-    title: "推奨は、方向と強さを分けて決める",
-    body: "する・しないという方向と、強い・条件付きという強さは別の判断です。",
+    title: "推奨は、読むときも方向と強さを分ける",
+    body: "する・しないという方向と、強い・条件付きという強さは別の判断です。EBMでは、条件付き推奨ほど患者との相談が重要になります。",
     src: "/images/ebm-grade-map/recommendation-direction.png",
     alt: "推奨の方向と強さの整理",
     width: 586,
@@ -212,8 +212,8 @@ const mapExcerpts: Array<MapExcerpt & { slideIds: string[] }> = [
   {
     slideIds: ["S66", "S67"],
     eyebrow: "推奨パターン",
-    title: "4つの推奨パターンで、患者との相談の深さが変わる",
-    body: "強い推奨、条件付き推奨、条件付きで推奨しない、強く推奨しないを区別します。",
+    title: "4つの推奨パターンは、EBM実践の分岐点",
+    body: "強い推奨、条件付き推奨、条件付きで推奨しない、強く推奨しないを区別すると、共有意思決定が必要な場面を見落としにくくなります。",
     src: "/images/ebm-grade-map/recommendation-patterns.png",
     alt: "4つの推奨パターン",
     width: 337,
@@ -230,10 +230,10 @@ export function EbmGradeMapCover() {
     <section className="reading-column ebm-map-column w-full">
       <div className="ebm-map-cover">
         <div className="ebm-map-cover-copy">
-          <span className="ebm-map-kicker">学習地図</span>
-          <h2>この図が、今回の基本です</h2>
+          <span className="ebm-map-kicker">EBMの学習地図</span>
+          <h2>この図を、EBMの読み方として使います</h2>
           <p>
-            EBMの文脈で、PICO、重要アウトカム、確実性評価、SoF、EtD、推奨作成を一つの流れとして読みます。
+            PICO、患者重要アウトカム、効果の大きさ、確実性、推奨を一つの流れで読みます。GRADEは、信頼できる情報を読み解くための道具として扱います。
           </p>
         </div>
         <div className="ebm-map-shell">

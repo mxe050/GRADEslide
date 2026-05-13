@@ -4,7 +4,7 @@ import clsx from "clsx";
 import type { Citation, Slide } from "@/lib/types";
 import { getAllSlides, getAppData } from "@/lib/slides";
 import { MarkdownText } from "./MarkdownText";
-import { GSenseiGuide, getGSenseiInlinePose } from "./GSenseiGuide";
+import { getGSenseiInlinePose } from "./gSenseiPose";
 
 interface Props {
   slide: Slide;
@@ -37,8 +37,6 @@ export function NarrationPanel({ slide }: Props) {
           </ul>
         </div>
       )}
-
-      <GSenseiGuide slide={slide} variant="narration" />
 
       <div className="narration-body text-[16.5px] md:text-lg text-[var(--foreground)]">
         <MarkdownText text={slide.narration} gSenseiImageSrc={gSenseiImageSrc} />
